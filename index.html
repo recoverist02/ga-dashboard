@@ -1,340 +1,746 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="ko">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>신림 GA 출석 대시보드</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="robots" content="noindex,nofollow,noarchive">
+  <meta name="theme-color" content="#146e63">
+  <meta name="description" content="신림수요·신림토요 GA 모임 현황과 출석 기록">
+  <title>GA · 함께 이어가는 회복</title>
   <style>
-    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
-    body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+    :root{--bg:#f3f6f4;--paper:#fff;--ink:#183b36;--muted:#71857e;--brand:#146e63;--soft:#e4f1ec;--line:#dfe9e3;--red:#bf5261}
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.5 system-ui,-apple-system,'Noto Sans KR',sans-serif;letter-spacing:-.025em}
+    button,input,select{font:inherit;color:inherit}
+    button{cursor:pointer;border:0}
+    button:focus-visible,input:focus-visible,select:focus-visible{outline:3px solid #dbad4e;outline-offset:2px}
+    header,.controls,.identity,.dialog-head,.section-head{display:flex;align-items:center;justify-content:space-between}
+    .shell{max-width:1120px;margin:auto;padding:0 24px}
+    header{padding:26px 0 20px;gap:12px}
+    .identity{justify-content:flex-start;gap:12px}
+    .identity b{font-size:20px;letter-spacing:-.05em}
+    .identity small{display:block;font-size:12px;color:var(--muted)}
+    .logo{height:46px;width:46px;display:grid;place-items:center;background:var(--brand);color:#fff;font-size:19px;font-weight:850;border-radius:15px;position:relative}
+    .logo span{position:absolute;right:4px;top:1px;color:#d5b362;font-size:9px}
+    .readonly{font-size:11px;border:1px solid #c9dcd2;border-radius:20px;padding:4px 9px;white-space:nowrap;color:var(--brand)}
+    .controls{gap:12px}
+    .groups{display:flex;background:#e5ebe7;border-radius:12px;padding:4px;gap:4px}
+    .groups button{padding:9px 20px;border-radius:9px;background:transparent;font-weight:750;color:var(--muted)}
+    .groups .active{background:var(--brand);color:white;box-shadow:0 3px 8px #146e6320}
+    .period-label{font-size:12px;color:var(--muted);white-space:nowrap}
+    select{border:1px solid var(--line);border-radius:9px;background:white;padding:7px 9px;margin-left:4px}
+    nav{display:flex;border-bottom:1px solid var(--line);gap:26px;margin:16px 0 10px}
+    nav button{position:relative;padding:11px 0;background:none;color:var(--muted);font-weight:750}
+    nav .active{color:var(--brand)}
+    nav .active:after{position:absolute;content:'';height:3px;background:var(--brand);bottom:-1px;left:0;right:0;border-radius:4px}
+    .data-note{font-size:11px;color:var(--muted);margin:8px 0 16px;padding:8px 11px;background:#eaf0e8;border-radius:8px;display:flex;align-items:center;justify-content:space-between;gap:8px;flex-wrap:wrap}
+    .refresh-feed{background:#fff;color:var(--brand);border:1px solid var(--line);border-radius:7px;padding:4px 8px;font-size:11px;white-space:nowrap}
+    .refresh-feed:disabled{opacity:.6;cursor:wait}
+    .page-title{margin:0;font-size:26px;letter-spacing:-.06em;line-height:1.25}
+    .subtitle{font-size:12px;color:var(--muted);margin:5px 0 16px}
+    .stats{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:10px;margin-bottom:16px}
+    .stat{padding:16px;background:var(--paper);border:1px solid var(--line);border-radius:14px;min-width:0}
+    .stat:first-child{background:var(--brand);color:#fff;border-color:var(--brand)}
+    .stat label{font-size:12px;display:block;opacity:.8}
+    .stat strong{font-size:31px;letter-spacing:-.06em;line-height:1.2;display:inline-block;margin-top:6px}
+    .stat strong small{font-size:13px;font-weight:500;margin-left:4px}
+    .stat p{font-size:10px;margin:5px 0 0;opacity:.7}
+    .grid{display:grid;grid-template-columns:1.5fr 1fr;gap:14px}
+    .panel{background:var(--paper);border:1px solid var(--line);border-radius:16px;padding:18px;margin-bottom:14px;min-width:0}
+    .section-head{gap:10px;margin-bottom:12px;flex-wrap:wrap}
+    .section-head h2{font-size:16px;margin:0}
+    .section-head span{font-size:11px;color:var(--muted)}
+    .chart{width:100%;height:auto;display:block;overflow:visible;user-select:none}
+    .chart text{font-family:inherit;font-size:11px;fill:var(--muted)}
+    .chart .gridline{stroke:#e8efea;stroke-width:1}
+    .chart .line{stroke:var(--brand);stroke-width:2.6;fill:none;stroke-linejoin:round}
+    .chart .dot{fill:#fff;stroke:var(--brand);stroke-width:2.4;cursor:pointer;transition:r .15s,fill .15s}
+    .chart .dot.selected{fill:var(--brand);r:5.5px}
+    .chart .hit{fill:transparent;cursor:pointer}
+    .chart .value-badge{font-size:11px;font-weight:750;fill:var(--brand)}
+    .caption{font-size:10px;color:var(--muted);margin:8px 0 0}
+    .list{display:grid;gap:0}
+    .person{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #edf2ee;padding:9px 0;text-align:left;background:none;width:100%}
+    .person:last-child{border:0}
+    .person b{font-size:13px}
+    .person span{font-size:12px;color:var(--muted)}
+    .person .celebration,.celebration{color:var(--red);font-weight:700}
+    .tag{background:var(--soft);color:var(--brand);font-size:10px;border-radius:6px;padding:2px 6px;margin-left:6px}
+    .empty{padding:30px 8px;color:var(--muted);text-align:center;font-size:13px}
+    .tools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+    .tools input{min-width:100px;flex:1;border:1px solid var(--line);background:white;padding:9px 12px;border-radius:9px}
+    .tools select{margin:0;max-width:180px}
+    .table-wrap{overflow-x:auto;overflow-y:hidden;max-height:none;border:1px solid var(--line);border-radius:12px;background:white;scrollbar-width:thin}
+    table{border-collapse:separate;border-spacing:0;width:100%;font-size:12px;white-space:nowrap}
+    th,td{padding:9px 10px;text-align:center;border-bottom:1px solid #edf2ee;min-width:54px}
+    thead th{position:sticky;top:0;background:#edf3ef;z-index:2;color:var(--muted);font-weight:650}
+    th:first-child,td:first-child{position:sticky;left:0;background:white;text-align:left;min-width:92px;z-index:1;border-right:1px solid var(--line)}
+    thead th:first-child{z-index:3;background:#edf3ef}
+    .name-btn{background:none;padding:0;font-weight:750;text-align:left}
+    .name-btn small{display:block;color:var(--muted);font-size:10px;font-weight:400}
+    .yes{color:var(--brand);font-size:17px}
+    .no{color:#c7d2cb}
+    .count{font-weight:750;color:var(--brand)}
+    .brief-select{width:100%;margin:4px 0 14px;white-space:normal}
+    .brief{white-space:pre-wrap;overflow-wrap:anywhere;font:14px/1.85 inherit;margin:0}
+    .monthbar{display:grid;grid-template-columns:52px 1fr 42px;gap:10px;align-items:center;font-size:12px;margin:13px 0}
+    .track{height:12px;background:#eef3ef;border-radius:6px;overflow:hidden}
+    .fill{height:100%;background:var(--brand);border-radius:6px}
+    .monthbar strong{text-align:right;font-size:12px}
+    .full{grid-column:1/-1}
+    footer{text-align:center;font-size:11px;color:var(--muted);padding:20px 0 30px}
+    footer span{font-size:10px;opacity:.8}
+    dialog{width:min(560px,calc(100% - 24px));max-height:86dvh;border:0;border-radius:19px;padding:22px;color:var(--ink);box-shadow:0 24px 90px #0c332d33}
+    dialog::backdrop{background:#14342c66;backdrop-filter:blur(3px)}
+    .dialog-head{margin-bottom:12px;align-items:flex-start}
+    .dialog-head small{font-size:10px;letter-spacing:.12em;color:var(--muted)}
+    .dialog-head h2{margin:3px 0;font-size:24px}
+    .dialog-head button{background:#edf2ee;border-radius:50%;width:32px;height:32px;font-size:22px}
+    .detail-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:14px 0}
+    .detail-stat{background:var(--soft);border-radius:10px;padding:10px 8px}
+    .detail-stat small{display:block;color:var(--muted);font-size:10px}
+    .detail-stat strong{display:block;font-size:17px;margin-top:4px}
+    .history{max-height:250px;overflow:auto}
+    .history div{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:8px 0;font-size:12px}
+    .error button{padding:8px 12px;border-radius:9px;background:var(--soft)}
+
+    /* 회원별 출석 테이블 컴팩트 스타일 */
+    #rosterTable tbody td{padding-top:2px;padding-bottom:2px;line-height:1.2}
+    #rosterTable .name-btn{display:block;line-height:1.2}
+    #rosterTable .name-btn small{line-height:1.2;margin:0}
+    #rosterTable .yes{font-size:14px}
+
+    /* [추가] 날짜 화살표 네비게이션 및 그래프 선택 정보 배지 스타일 */
+    .date-nav{display:inline-flex;align-items:center;gap:6px;background:var(--soft);padding:3px 6px;border-radius:9px}
+    .nav-arrow{background:#fff;color:var(--brand);border:1px solid #c9dcd2;border-radius:6px;width:24px;height:24px;display:inline-grid;place-items:center;font-size:11px;font-weight:800;padding:0;transition:background .15s}
+    .nav-arrow:hover:not(:disabled){background:var(--brand);color:#fff;border-color:var(--brand)}
+    .nav-arrow:disabled{opacity:.35;cursor:default}
+    .nav-date-text{font-size:12px;font-weight:750;color:var(--brand);min-width:92px;text-align:center}
+    .stat-nav{display:flex;align-items:center;justify-content:space-between;gap:4px;margin-top:5px}
+    .stat-nav button{background:rgba(255,255,255,.18);color:#fff;border-radius:5px;width:20px;height:20px;font-size:10px;display:inline-grid;place-items:center;padding:0}
+    .stat-nav button:hover:not(:disabled){background:rgba(255,255,255,.32)}
+    .stat-nav button:disabled{opacity:.3;cursor:default}
+    .stat-nav span{font-size:10px;opacity:.92}
+    .chart-info-pill{display:inline-flex;align-items:center;gap:6px;background:var(--soft);color:var(--brand);font-size:11px;font-weight:750;padding:4px 10px;border-radius:20px}
+
+    @media(max-width:700px){
+      .shell{padding:0 14px}
+      header{padding:18px 0 15px}
+      .identity b{font-size:18px}
+      .identity small{font-size:10px}
+      .logo{height:40px;width:40px;border-radius:12px}
+      .controls{gap:6px}
+      .groups{flex:1}
+      .groups button{flex:1;padding:8px 10px}
+      .period-label{font-size:0}
+      .period-label select{font-size:12px;padding:8px 6px}
+      .stats{gap:6px;margin-bottom:12px}
+      .stat{padding:12px 8px;border-radius:11px}
+      .stat label{font-size:10px}
+      .stat strong{font-size:26px}
+      .stat strong small{font-size:10px;margin-left:2px}
+      .stat p{font-size:9px}
+      .grid{grid-template-columns:1fr;gap:0}
+      .panel{padding:14px;margin-bottom:12px}
+      .page-title{font-size:23px}
+      .subtitle{margin-bottom:12px}
+      .data-note{margin-bottom:13px;font-size:10px}
+      nav{justify-content:space-around;gap:0;margin-top:10px}
+      nav button{font-size:13px}
+      .table-wrap{max-height:none}
+      th,td{padding:8px 7px;min-width:48px}
+      .tools{gap:6px}
+      .tools select{font-size:11px;padding:8px 5px;max-width:145px}
+      .detail-stat strong{font-size:15px}
+    }
   </style>
 </head>
-<body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
-
-  <div class="max-w-4xl mx-auto px-4 pt-6 space-y-6">
-    <!-- 상단 헤더 & 모임 필터 -->
-    <header class="bg-white rounded-2xl shadow-sm p-5 border border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-      <div>
-        <div class="flex items-center gap-2">
-          <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700">LIVE</span>
-          <span id="asOfText" class="text-xs text-slate-400">데이터 불러오는 중...</span>
+<body>
+  <div class="shell">
+    <header>
+      <div class="identity">
+        <span class="logo">GA<span>●</span></span>
+        <div>
+          <b>함께 이어가는 회복</b>
+          <small>신림수요 · 신림토요 모임 대시보드</small>
         </div>
-        <h1 class="text-2xl font-extrabold text-slate-900 mt-1">🌱 신림 GA 출석 대시보드</h1>
       </div>
-
-      <!-- 모임 필터 탭 -->
-      <div class="inline-flex bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
-        <button onclick="setGroupFilter('ALL')" id="tab-ALL" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-slate-900 shadow-sm">전체</button>
-        <button onclick="setGroupFilter('신림수요')" id="tab-신림수요" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-slate-900">신림수요</button>
-        <button onclick="setGroupFilter('신림토요')" id="tab-신림토요" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-slate-900">신림토요</button>
-      </div>
+      <span class="readonly">조회 전용</span>
     </header>
 
-    <!-- [요청 2] 회차별 출석 조회 (양옆 화살표로 이전/다음 기록 이동) -->
-    <section class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200/70">
-      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
-        <button id="prevBtn" onclick="navigateSession(-1)" 
-                class="flex items-center gap-1 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition font-semibold text-sm text-slate-700">
-          ◀ <span class="hidden sm:inline">이전 출석</span>
-        </button>
-
-        <div class="text-center">
-          <div class="flex items-center justify-center gap-1.5 mb-1">
-            <span id="sessionGroupBadge" class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-indigo-50 text-indigo-600">모임</span>
-            <span id="sessionOrderBadge" class="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-500">최근 출석</span>
-          </div>
-          <h2 id="sessionDateTitle" class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
-            YYYY-MM-DD
-          </h2>
-        </div>
-
-        <button id="nextBtn" onclick="navigateSession(1)" 
-                class="flex items-center gap-1 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition font-semibold text-sm text-slate-700">
-          <span class="hidden sm:inline">다음 출석</span> ▶
-        </button>
+    <div class="controls">
+      <div class="groups" aria-label="모임 선택">
+        <button data-group="신림수요" class="active" aria-pressed="true">신림수요</button>
+        <button data-group="신림토요" aria-pressed="false">신림토요</button>
       </div>
+      <label class="period-label">조회 기간
+        <select id="period">
+          <option value="3">최근 3개월</option>
+          <option value="6">최근 6개월</option>
+          <option value="12">최근 1년</option>
+          <option value="all">전체 기간</option>
+        </select>
+      </label>
+    </div>
 
-      <!-- 선택된 날짜의 출석 요약 & 명단 -->
-      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
-        <div class="bg-blue-50/70 border border-blue-100 rounded-xl p-4 text-center">
-          <p class="text-xs font-semibold text-blue-600">참석 인원</p>
-          <p id="sessionCount" class="text-3xl font-black text-blue-700 mt-1">-명</p>
-        </div>
+    <nav aria-label="대시보드 메뉴">
+      <button data-tab="overview" class="active" aria-current="page">모임 현황</button>
+      <button data-tab="members">회원별 출석</button>
+      <button data-tab="briefs">브리핑</button>
+    </nav>
 
-        <div class="md:col-span-3 bg-slate-50 rounded-xl p-4 border border-slate-100">
-          <p class="text-xs font-bold text-slate-400 mb-2.5">출석 회원 명단 (단도박 기간)</p>
-          <div id="attendeeBadges" class="flex flex-wrap gap-2"></div>
-        </div>
-      </div>
+    <div class="data-note" id="dataNote" role="status">출석 기록을 불러오고 있어…</div>
+    <main id="content" aria-live="polite"></main>
 
-      <!-- 해당 회차 브리핑 기록이 있을 경우 표시 -->
-      <div id="briefBox" class="mt-4 hidden bg-emerald-50/60 border border-emerald-100 rounded-xl p-4">
-        <p class="text-xs font-bold text-emerald-700 mb-1">📋 모임 브리핑 기록</p>
-        <pre id="briefText" class="text-xs sm:text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed"></pre>
-      </div>
-    </section>
-
-    <!-- [요청 3] 회차별 참석인원 그래프 (특정 날짜 클릭 시 간략 정보 표시) -->
-    <section class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200/70">
-      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-        <div>
-          <h3 class="text-lg font-bold text-slate-900">📊 회차별 참석인원 추이</h3>
-          <p class="text-xs text-slate-500 mt-0.5">그래프의 점을 누르면 해당 날짜와 참석인원이 표시되고 위 출석부가 전환됩니다.</p>
-        </div>
-        <!-- 클릭한 위치의 날짜와 참석인원 표시 배지 -->
-        <div id="clickedPointInfo" class="px-4 py-2 rounded-xl bg-indigo-50 border border-indigo-100 text-sm font-bold text-indigo-800 self-start sm:self-auto">
-          👆 그래프에서 날짜 위치를 눌러보세요
-        </div>
-      </div>
-
-      <div class="relative h-64 w-full">
-        <canvas id="attendanceChart"></canvas>
-      </div>
-    </section>
-
-    <!-- 다가오는 잔치 (100일 / 주년) 섹션 -->
-    <section class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200/70">
-      <h3 class="text-lg font-bold text-slate-900 mb-3">🎉 다가오는 잔치 (이번 달 · 다음 달)</h3>
-      <div id="celebrationList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
-    </section>
+    <footer>
+      함께한 하루가 모여, 회복의 시간이 됩니다.<br>
+      <span>출석이 저장된 회차 기준 · 한국시간 기준 집계</span>
+    </footer>
   </div>
 
+  <dialog id="detail">
+    <div class="dialog-head">
+      <div>
+        <small>MEMBER RECORD</small>
+        <h2 id="detailTitle"></h2>
+      </div>
+      <button id="closeDetail" aria-label="닫기">×</button>
+    </div>
+    <div id="detailBody"></div>
+  </dialog>
+
   <script>
-    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwWGnExweV-E4r5u_lNKi3Av0soVLTvt8VxwRrt0zdmuI-SdJ1JP0P_2zLKU5o5BcQ/exec";
+    // Google Apps Script 웹 앱 배포 주소
+    const publicFeedUrl = "https://script.google.com/macros/s/AKfycbwWGnExweV-E4r5u_lNKi3Av0soVLTvt8VxwRrt0zdmuI-SdJ1JP0P_2zLKU5o5BcQ/exec";
+    const CACHE_KEY = "ga-dashboard-cache-v1";
 
-    let rawData = null;
-    let currentGroup = 'ALL';
-    let sessions = [];
-    let currentIndex = 0;
-    let chartInstance = null;
+    const $ = s => document.querySelector(s);
+    const esc = v => String(v ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 
-    async function loadDashboardData() {
-      try {
-        const response = await fetch(GAS_WEB_APP_URL);
-        const payload = await response.json();
-        rawData = payload;
-        document.getElementById('asOfText').textContent = `기준일: ${payload.asOf}`;
-        buildSessions();
-        renderCelebrations();
-      } catch (error) {
-        console.error('데이터 로딩 실패:', error);
-        document.getElementById('asOfText').textContent = '데이터 로드 실패 (새로고침 해주세요)';
-      }
+    let data = null;
+    let group = '신림수요';
+    let tab = 'overview';
+    let period = '3';
+    let query = '';
+    let scope = 'active';
+    let sort = 'count';
+    let briefId = '';
+    let selectedDate = ''; // [추가] 화살표 및 그래프 클릭으로 선택된 모임 날짜
+
+    const dateLabel = d => d ? d.slice(2).replaceAll('-', '.') : '—';
+    const journey = m => `<span>${esc(m.journey || '미확인')}</span>`;
+
+    // --- model.mjs 복원 함수들 ---
+    function shiftMonth(iso, amount) {
+      if (!iso) return '';
+      const d = new Date(iso + 'T00:00:00Z');
+      const day = d.getUTCDate();
+      d.setUTCDate(1);
+      d.setUTCMonth(d.getUTCMonth() + amount);
+      const max = new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth() + 1, 0)).getUTCDate();
+      d.setUTCDate(Math.min(day, max));
+      return d.toISOString().slice(0, 10);
     }
 
-    function buildSessions() {
-      if (!rawData) return;
-      const memberMap = {};
-      (rawData.members || []).forEach(m => { memberMap[m.id] = m; });
+    function compareJourney(a, b) {
+      const da = a.days != null ? a.days : -1;
+      const db = b.days != null ? b.days : -1;
+      if (db !== da) return db - da;
+      return String(a.name || '').localeCompare(String(b.name || ''), 'ko');
+    }
 
-      const briefMap = {};
-      (rawData.briefs || []).forEach(b => {
-        briefMap[`${b.group}|${b.date}`] = b.message;
+    function select(feed, grp, per) {
+      const all = (feed.records || []).filter(r => r.group === grp);
+      const since = per === 'all' ? '' : shiftMonth(feed.asOf, -Number(per));
+      const rows = since ? all.filter(r => r.date >= since) : all;
+      // dates: 내림차순 정렬 (dates[0]이 가장 최근 출석일)
+      const dates = Array.from(new Set(rows.map(r => r.date))).sort((a, b) => b.localeCompare(a));
+      const activeCutoff = shiftMonth(feed.asOf, -6);
+      const active = new Set(all.filter(r => r.date >= activeCutoff).map(r => r.memberId));
+      return { all, rows, dates, since, active };
+    }
+
+    function months(rows) {
+      const map = new Map();
+      rows.forEach(r => {
+        const m = r.date.slice(0, 7);
+        if (!map.has(m)) map.set(m, { month: m, total: 0, dates: new Set() });
+        const item = map.get(m);
+        item.total++;
+        item.dates.add(r.date);
       });
+      return Array.from(map.values())
+        .sort((a, b) => a.month.localeCompare(b.month))
+        .map(x => ({ month: x.month, total: x.total, count: x.dates.size, average: x.dates.size ? x.total / x.dates.size : 0 }));
+    }
 
-      const grouped = {};
-      (rawData.records || []).forEach(r => {
-        if (currentGroup !== 'ALL' && r.group !== currentGroup) return;
-        const key = `${r.date}|${r.group}`;
-        if (!grouped[key]) {
-          grouped[key] = { date: r.date, group: r.group, attendees: [], brief: briefMap[`${r.group}|${r.date}`] || '' };
-        }
-        const m = memberMap[r.memberId];
-        grouped[key].attendees.push({
-          id: r.memberId,
-          name: m ? m.name : r.memberId,
-          journey: m && m.journey ? m.journey : '미확인',
-          days: m && m.days != null ? m.days : -1
-        });
+    function memberList(feed, v, scp, q, srt) {
+      const lastMap = new Map();
+      v.all.forEach(r => {
+        const prev = lastMap.get(r.memberId);
+        if (!prev || r.date > prev) lastMap.set(r.memberId, r.date);
       });
-
-      sessions = Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date) || a.group.localeCompare(b.group));
-      sessions.forEach(s => { s.attendees.sort((a, b) => b.days - a.days); });
-
-      currentIndex = Math.max(0, sessions.length - 1);
-      renderCurrentSession();
-      renderChart();
-    }
-
-    function setGroupFilter(group) {
-      currentGroup = group;
-      ['ALL', '신림수요', '신림토요'].forEach(g => {
-        const btn = document.getElementById(`tab-${g}`);
-        if (g === group) {
-          btn.className = "px-3.5 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-slate-900 shadow-sm";
-        } else {
-          btn.className = "px-3.5 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-slate-900";
-        }
+      const countMap = new Map();
+      v.rows.forEach(r => {
+        countMap.set(r.memberId, (countMap.get(r.memberId) || 0) + 1);
       });
-      buildSessions();
-    }
+      const inPeriod = new Set(v.rows.map(r => r.memberId));
+      const needle = (q || '').trim().toLowerCase();
 
-    function navigateSession(step) {
-      const next = currentIndex + step;
-      if (next >= 0 && next < sessions.length) {
-        currentIndex = next;
-        renderCurrentSession();
-        highlightChartPoint(currentIndex);
-      }
-    }
-
-    function renderCurrentSession() {
-      if (sessions.length === 0) {
-        document.getElementById('sessionDateTitle').textContent = '출석 기록 없음';
-        document.getElementById('sessionCount').textContent = '0명';
-        document.getElementById('attendeeBadges').innerHTML = '';
-        document.getElementById('prevBtn').disabled = true;
-        document.getElementById('nextBtn').disabled = true;
-        return;
-      }
-
-      const s = sessions[currentIndex];
-      const isLatest = (currentIndex === sessions.length - 1);
-      const daysKo = ['일', '월', '화', '수', '목', '금', '토'];
-      const dObj = new Date(s.date + 'T00:00:00');
-      const dayName = daysKo[dObj.getDay()];
-
-      document.getElementById('sessionGroupBadge').textContent = s.group;
-      document.getElementById('sessionGroupBadge').className = s.group === '신림수요'
-        ? 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-sky-100 text-sky-700'
-        : 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-800';
-
-      document.getElementById('sessionOrderBadge').textContent = isLatest
-        ? '✨ 가장 최근 출석'
-        : `이전 기록 (${currentIndex + 1} / ${sessions.length})`;
-
-      document.getElementById('sessionDateTitle').textContent = `${s.date} (${dayName})`;
-      document.getElementById('sessionCount').textContent = `${s.attendees.length}명`;
-
-      const container = document.getElementById('attendeeBadges');
-      container.innerHTML = '';
-      s.attendees.forEach(a => {
-        const badge = document.createElement('span');
-        badge.className = 'inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-800 shadow-2xs';
-        badge.innerHTML = `${a.name} <span class="text-xs font-normal text-slate-400">(${a.journey})</span>`;
-        container.appendChild(badge);
-      });
-
-      const briefBox = document.getElementById('briefBox');
-      if (s.brief) {
-        briefBox.classList.remove('hidden');
-        document.getElementById('briefText').textContent = s.brief;
-      } else {
-        briefBox.classList.add('hidden');
-      }
-
-      document.getElementById('prevBtn').disabled = (currentIndex <= 0);
-      document.getElementById('nextBtn').disabled = (currentIndex >= sessions.length - 1);
-
-      document.getElementById('clickedPointInfo').innerHTML =
-        `📅 <span>${s.date} (${s.group})</span> &nbsp;·&nbsp; 👥 참석인원: <strong class="text-indigo-600">${s.attendees.length}명</strong>`;
-    }
-
-    function renderChart() {
-      const ctx = document.getElementById('attendanceChart').getContext('2d');
-      if (chartInstance) chartInstance.destroy();
-
-      const labels = sessions.map(s => s.date.slice(5));
-      const counts = sessions.map(s => s.attendees.length);
-
-      chartInstance = new Chart(ctx, {
-        type: 'line',
-        data: {
-          labels: labels,
-          datasets: [{
-            label: '참석인원',
-            data: counts,
-            borderColor: '#4f46e5',
-            backgroundColor: 'rgba(79, 70, 229, 0.1)',
-            borderWidth: 2.5,
-            pointRadius: sessions.map((_, i) => i === currentIndex ? 7 : 4),
-            pointBackgroundColor: sessions.map((_, i) => i === currentIndex ? '#4f46e5' : '#ffffff'),
-            pointBorderColor: '#4f46e5',
-            pointBorderWidth: 2.5,
-            pointHoverRadius: 8,
-            fill: true,
-            tension: 0.25
-          }]
-        },
-        options: {
-          responsive: true,
-          maintainAspectRatio: false,
-          interaction: { mode: 'nearest', intersect: false },
-          plugins: {
-            legend: { display: false },
-            tooltip: {
-              backgroundColor: 'rgba(15, 23, 42, 0.92)',
-              padding: 12,
-              displayColors: false,
-              callbacks: {
-                title: (items) => {
-                  const s = sessions[items[0].dataIndex];
-                  return `📅 날짜: ${s.date} (${s.group})`;
-                },
-                label: (item) => `👥 참석인원: ${item.raw}명`
-              }
-            }
-          },
-          onClick: (event, elements) => {
-            if (elements.length > 0) {
-              const idx = elements[0].index;
-              currentIndex = idx;
-              renderCurrentSession();
-              highlightChartPoint(idx);
-            }
-          },
-          scales: {
-            y: {
-              beginAtZero: true,
-              ticks: { stepSize: 2, callback: (v) => v + '명' }
-            }
+      return (feed.members || [])
+        .filter(m => {
+          if (scp === 'active') return v.active.has(m.id) || (m.group === group && lastMap.has(m.id) && lastMap.get(m.id) >= shiftMonth(feed.asOf, -6));
+          return inPeriod.has(m.id);
+        })
+        .filter(m => !needle || String(m.name || '').toLowerCase().includes(needle))
+        .map(m => ({ ...m, count: countMap.get(m.id) || 0, last: lastMap.get(m.id) || '' }))
+        .sort((a, b) => {
+          if (srt === 'latest') {
+            if (b.last !== a.last) return (b.last || '').localeCompare(a.last || '');
+            if (b.count !== a.count) return b.count - a.count;
+            return compareJourney(a, b);
           }
+          if (b.count !== a.count) return b.count - a.count;
+          if (b.last !== a.last) return (b.last || '').localeCompare(a.last || '');
+          return compareJourney(a, b);
+        });
+    }
+
+    // --- feed.mjs & cache.mjs 복원 함수들 ---
+    function normalizeFeed(raw) {
+      if (!raw || typeof raw !== 'object') throw Error('Invalid feed');
+      return {
+        asOf: String(raw.asOf || new Date().toISOString().slice(0, 10)),
+        loadedAt: raw.loadedAt || new Date().toISOString(),
+        mode: raw.mode || 'live',
+        members: Array.isArray(raw.members) ? raw.members : [],
+        records: Array.isArray(raw.records) ? raw.records : [],
+        briefs: Array.isArray(raw.briefs) ? raw.briefs : []
+      };
+    }
+
+    function readCachedFeed(storage) {
+      if (!storage) return null;
+      try {
+        const raw = storage.getItem(CACHE_KEY);
+        return raw ? normalizeFeed(JSON.parse(raw)) : null;
+      } catch { return null; }
+    }
+
+    function writeCachedFeed(storage, feed) {
+      if (!storage) return;
+      try { storage.setItem(CACHE_KEY, JSON.stringify(feed)); } catch {}
+    }
+
+    // JSONP(gaDashboardReceive) 방식과 일반 fetch(JSON) 방식을 모두 지원하여 에러 원천 차단
+    function loadPublicFeed(url) {
+      return new Promise((resolve, reject) => {
+        let settled = false;
+        const timer = setTimeout(() => {
+          if (!settled) { settled = true; reject(new Error('Timeout')); }
+        }, 12000);
+
+        // 1차: 원래 Apps Script의 JSONP 콜백(gaDashboardReceive) 시도
+        const script = document.createElement('script');
+        window.gaDashboardReceive = function(payload) {
+          if (settled) return;
+          settled = true;
+          clearTimeout(timer);
+          script.remove();
+          try { resolve(normalizeFeed(payload)); } catch (e) { reject(e); }
+        };
+        script.onerror = async () => {
+          script.remove();
+          if (settled) return;
+          // 2차: 만약 Code.gs를 일반 JSON으로 바꿨을 경우 fetch로 자동 전환
+          try {
+            const res = await fetch(url, { cache: 'no-store' });
+            const text = await res.text();
+            const cleaned = text.replace(/^gaDashboardReceive\(/, '').replace(/\);?\s*$/, '');
+            settled = true;
+            clearTimeout(timer);
+            resolve(normalizeFeed(JSON.parse(cleaned)));
+          } catch (err) {
+            if (!settled) { settled = true; clearTimeout(timer); reject(err); }
+          }
+        };
+        script.src = url + (url.includes('?') ? '&' : '?') + 'callback=gaDashboardReceive&_=' + Date.now();
+        document.head.appendChild(script);
+      });
+    }
+
+    // --- UI 렌더링 함수들 ---
+    function person(m) {
+      return `<button class="person" data-member="${esc(m.id)}"><b>${esc(m.name)}</b>${journey(m)}</button>`;
+    }
+
+    // [요청 3 반영] 그래프에서 특정 날짜 클릭 시 날짜·인원 표시 및 출석 명단 연동
+    function chart(points, label, interactive = false) {
+      if (!points.length) return '<div class="empty">표시할 출석 기록이 없어.</div>';
+      const w = 640, h = 210, left = 34, right = 18, top = 28, bottom = 33;
+      const max = Math.max(4, ...points.map(p => p.value));
+      const cap = Math.ceil(max / 4) * 4;
+      const x = i => left + (points.length === 1 ? (w - left - right) / 2 : i * (w - left - right) / (points.length - 1));
+      const y = v => h - bottom - v * (h - top - bottom) / cap;
+
+      let svg = `<svg class="chart" viewBox="0 0 ${w} ${h}" role="img" aria-label="${esc(label)}">`;
+      for (let i = 0; i <= 4; i++) {
+        const v = cap * i / 4;
+        svg += `<line class="gridline" x1="${left}" y1="${y(v)}" x2="${w - right}" y2="${y(v)}"/><text x="${left - 9}" y="${y(v) + 4}" text-anchor="end">${v}</text>`;
+      }
+      svg += `<polyline class="line" points="${points.map((p, i) => x(i) + ',' + y(p.value)).join(' ')}"/>`;
+
+      points.forEach((p, i) => {
+        const isSel = interactive && p.date && p.date === selectedDate;
+        const cx = x(i), cy = y(p.value);
+        if (isSel) {
+          svg += `<line x1="${cx}" y1="${top - 6}" x2="${cx}" y2="${h - bottom}" stroke="#146e63" stroke-width="1.2" stroke-dasharray="3 3"/>`;
+          svg += `<text class="value-badge" x="${cx}" y="${Math.max(14, cy - 10)}" text-anchor="middle">${esc(p.label)} (${p.value}명)</text>`;
+        }
+        svg += `<circle class="dot ${isSel ? 'selected' : ''}" cx="${cx}" cy="${cy}" r="${isSel ? 5.5 : 3.6}" ${interactive && p.date ? `data-chart-date="${esc(p.date)}"` : ''}><title>${esc(p.date ? dateLabel(p.date) : p.label)} · ${p.value}명</title></circle>`;
+        if (interactive && p.date) {
+          svg += `<circle class="hit" cx="${cx}" cy="${cy}" r="16" data-chart-date="${esc(p.date)}"></circle>`;
+        }
+        if (i === 0 || i === points.length - 1 || i % Math.max(1, Math.ceil(points.length / 6)) === 0) {
+          svg += `<text x="${cx}" y="${h - 9}" text-anchor="middle" style="${isSel ? 'fill:var(--brand);font-weight:750' : ''}">${esc(p.label)}</text>`;
         }
       });
+      return svg + '</svg>';
     }
 
-    function highlightChartPoint(selectedIdx) {
-      if (!chartInstance) return;
-      const ds = chartInstance.data.datasets[0];
-      ds.pointRadius = sessions.map((_, i) => i === selectedIdx ? 7 : 4);
-      ds.pointBackgroundColor = sessions.map((_, i) => i === selectedIdx ? '#4f46e5' : '#ffffff');
-      chartInstance.update();
-    }
-
-    function renderCelebrations() {
-      const container = document.getElementById('celebrationList');
-      container.innerHTML = '';
-      const list = [];
-      (rawData.members || []).forEach(m => {
-        (m.celebrations || []).forEach(c => {
-          list.push({ name: m.name, group: m.group, date: c.date, label: c.label });
-        });
-      });
-      list.sort((a, b) => a.date.localeCompare(b.date));
-
-      if (list.length === 0) {
-        container.innerHTML = '<p class="text-sm text-slate-400">예정된 잔치가 없습니다.</p>';
-        return;
+    function overview(v) {
+      // selectedDate가 현재 기간 내에 없으면 가장 최근 날짜(v.dates[0])로 자동 설정
+      if (!selectedDate || !v.dates.includes(selectedDate)) {
+        selectedDate = v.dates[0] || '';
       }
-      list.forEach(item => {
-        const div = document.createElement('div');
-        div.className = 'flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-100';
-        div.innerHTML = `
-          <div>
-            <span class="text-xs font-semibold text-slate-400">${item.date} (${item.group})</span>
-            <p class="text-sm font-bold text-slate-800 mt-0.5">${item.name}</p>
+      const dateIdx = v.dates.indexOf(selectedDate); // v.dates[0] = 최신, v.dates[length-1] = 가장 과거
+      const hasPrev = dateIdx >= 0 && dateIdx < v.dates.length - 1; // 이전(과거) 기록 존재 여부
+      const hasNext = dateIdx > 0; // 다음(최신 방향) 기록 존재 여부
+      const isLatest = dateIdx === 0;
+
+      const selectedRows = v.rows.filter(r => r.date === selectedDate);
+      const unique = new Set(v.rows.map(r => r.memberId));
+      const pointDates = [...v.dates].reverse();
+      const trend = pointDates.map(d => ({
+        date: d,
+        label: d.slice(5).replace('-', '/'),
+        value: v.rows.filter(r => r.date === d).length
+      }));
+      const monthly = months(v.rows);
+      const max = Math.max(1, ...monthly.map(m => m.average));
+      const celebrationMonth = m => m.celebrations.map(c => c.date.slice(0, 7)).sort()[0];
+      const celebrate = data.members
+        .filter(m => m.group === group && v.active.has(m.id) && m.celebrations?.length)
+        .sort((a, b) => celebrationMonth(a).localeCompare(celebrationMonth(b)) || compareJourney(a, b));
+
+      return `
+        <h1 class="page-title">${esc(group)} 모임 현황</h1>
+        <p class="subtitle">${period === 'all' ? '전체 기록' : dateLabel(v.since) + ' ~ ' + dateLabel(data.asOf)} · 함께한 시간의 기록</p>
+
+        <div class="stats">
+          <div class="stat">
+            <label>${isLatest ? '최근 모임' : '선택 모임'}</label>
+            <strong>${selectedRows.length}<small>명</small></strong>
+            <div class="stat-nav">
+              <button type="button" data-nav-date="prev" ${!hasPrev ? 'disabled' : ''} aria-label="이전 출석 날짜">◀</button>
+              <span>${selectedDate ? dateLabel(selectedDate) : '기록 없음'}</span>
+              <button type="button" data-nav-date="next" ${!hasNext ? 'disabled' : ''} aria-label="다음 출석 날짜">▶</button>
+            </div>
           </div>
-          <span class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 text-xs font-extrabold">🎉 ${item.label}</span>
-        `;
-        container.appendChild(div);
+          <div class="stat">
+            <label>참석 회원</label>
+            <strong>${unique.size}<small>명</small></strong>
+            <p>선택 기간 · 중복 제외</p>
+          </div>
+          <div class="stat">
+            <label>회당 평균</label>
+            <strong>${v.dates.length ? (v.rows.length / v.dates.length).toFixed(1) : '0.0'}<small>명</small></strong>
+            <p>출석 저장 회차 기준</p>
+          </div>
+          <div class="stat">
+            <label>모임 횟수</label>
+            <strong>${v.dates.length}<small>회</small></strong>
+            <p>선택 기간</p>
+          </div>
+        </div>
+
+        <div class="grid">
+          <section class="panel">
+            <div class="section-head">
+              <h2>회차별 참석 인원</h2>
+              ${selectedDate
+                ? `<div class="chart-info-pill">📅 ${dateLabel(selectedDate)} · 참석 ${selectedRows.length}명</div>`
+                : `<span>단위 · 명</span>`}
+            </div>
+            ${chart(trend, '회차별 참석 인원', true)}
+            <p class="caption">점을 누르면 해당 날짜와 참석 인원을 확인할 수 있고 아래 출석 명단도 함께 바뀌어. 미입력 회차는 제외돼.</p>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <h2>월별 평균 참석 인원</h2>
+              <span>회당 · 명</span>
+            </div>
+            ${monthly.length
+              ? monthly.map(m => `<div class="monthbar"><span>${m.month.slice(2).replace('-', '.')}</span><div class="track"><div class="fill" style="width:${m.average / max * 100}%"></div></div><strong>${m.average.toFixed(1)}</strong></div>`).join('')
+              : '<div class="empty">표시할 기록이 없어.</div>'}
+            <p class="caption">월 누적 출석 인원 ÷ 출석이 저장된 모임 횟수</p>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <h2>${isLatest ? '최근 모임 참석자' : '회차별 모임 참석자'}</h2>
+              <div class="date-nav">
+                <button type="button" class="nav-arrow" data-nav-date="prev" ${!hasPrev ? 'disabled' : ''} title="이전 모임 기록" aria-label="이전 모임 기록">◀</button>
+                <span class="nav-date-text">${selectedDate ? dateLabel(selectedDate) : ''} · ${selectedRows.length}명</span>
+                <button type="button" class="nav-arrow" data-nav-date="next" ${!hasNext ? 'disabled' : ''} title="다음 모임 기록" aria-label="다음 모임 기록">▶</button>
+              </div>
+            </div>
+            <div class="list">
+              ${selectedRows.map(r => data.members.find(m => m.id === r.memberId)).filter(Boolean).sort(compareJourney).map(person).join('') || '<div class="empty">출석 기록이 없어.</div>'}
+            </div>
+          </section>
+
+          <section class="panel">
+            <div class="section-head">
+              <h2>다가오는 잔치</h2>
+              <span>이번 달 · 다음 달</span>
+            </div>
+            ${celebrate.map(m => `<button class="person" data-member="${esc(m.id)}"><b>${esc(m.name)}</b><span class="celebration">${m.celebrations.map(c => `${c.date.slice(2, 4)}년 ${Number(c.date.slice(5, 7))}월 · ${esc(c.label)}`).join('<br>')}</span></button>`).join('') || '<div class="empty">등록된 잔치 일정이 없어.</div>'}
+            <p class="caption">해당 모임 소속 · 최근 6개월 참석 회원 기준 · 해당 월 말까지 표시</p>
+          </section>
+        </div>`;
+    }
+
+    function roster(v) {
+      return `
+        <h1 class="page-title">회원별 출석</h1>
+        <p class="subtitle">${esc(group)} 출석 기준 · 단도박 기간은 ${dateLabel(data.asOf)} 기준</p>
+        <div class="tools">
+          <input id="search" type="search" placeholder="활동명 검색" aria-label="활동명 검색" value="${esc(query)}">
+          <select id="scope" aria-label="회원 범위">
+            <option value="active" ${scope === 'active' ? 'selected' : ''}>최근 6개월 참석 회원</option>
+            <option value="period" ${scope === 'period' ? 'selected' : ''}>조회 기간 참석 회원</option>
+          </select>
+          <select id="sort" aria-label="정렬">
+            <option value="latest" ${sort === 'latest' ? 'selected' : ''}>최근 출석순</option>
+            <option value="count" ${sort === 'count' ? 'selected' : ''}>출석횟수순</option>
+          </select>
+        </div>
+        <div id="rosterTable">${table(v)}</div>
+        <p class="caption">● 참석 기록 있음 · · 명단에 없음 · 이름을 누르면 상세 기록 · 날짜 영역을 좌우로 넘길 수 있어.</p>`;
+    }
+
+    function table(v) {
+      const list = memberList(data, v, scope, query, sort);
+      const attended = new Set(v.rows.map(r => r.memberId + '|' + r.date));
+      return `
+        <p class="subtitle">${list.length}명 · ${v.dates.length}회 모임</p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>활동명</th>
+                <th>단도박 기간</th>
+                <th>출석</th>
+                ${v.dates.map(d => `<th>${d.slice(2, 4)}년<br>${d.slice(5).replace('-', '/')}</th>`).join('')}
+              </tr>
+            </thead>
+            <tbody>
+              ${list.map(m => `
+                <tr>
+                  <td><button class="name-btn" data-member="${esc(m.id)}">${esc(m.name)}<small>최근 ${dateLabel(m.last)}</small></button></td>
+                  <td>${journey(m)}</td>
+                  <td class="count">${m.count}회</td>
+                  ${v.dates.map(d => `<td class="${attended.has(m.id + '|' + d) ? 'yes' : 'no'}" aria-label="${esc(m.name)} ${d} ${attended.has(m.id + '|' + d) ? '참석' : '명단에 없음'}">${attended.has(m.id + '|' + d) ? '●' : '·'}</td>`).join('')}
+                </tr>`).join('') || '<tr><td colspan="3">조건에 맞는 회원이 없어.</td></tr>'}
+            </tbody>
+          </table>
+        </div>`;
+    }
+
+    function briefing() {
+      const rows = data.briefs.filter(b => b.group === group && b.date >= shiftMonth(data.asOf, -12)).sort((a, b) => b.date.localeCompare(a.date));
+      const chosen = rows.find(b => b.id === briefId) || rows[0];
+      return `
+        <h1 class="page-title">모임 브리핑</h1>
+        <p class="subtitle">최근 1년 · 최신 기록부터 표시</p>
+        ${rows.length
+          ? `<select id="briefSelect" class="brief-select" aria-label="브리핑 주차">
+              ${rows.map(b => `<option value="${esc(b.id)}" ${b === chosen ? 'selected' : ''}>${dateLabel(b.weekStart)} 주간 · 모임 ${dateLabel(b.date)}</option>`).join('')}
+            </select>
+            <section class="panel"><div class="brief">${esc(chosen.message)}</div></section>`
+          : '<div class="panel empty">저장된 브리핑이 없어.</div>'}`;
+    }
+
+    function detail(id) {
+      const m = data.members.find(m => m.id === id);
+      if (!m) return;
+      const v = select(data, group, period);
+      const history = v.all.filter(r => r.memberId === id).sort((a, b) => b.date.localeCompare(a.date));
+      const count = v.rows.filter(r => r.memberId === id).length;
+      const total = data.records.filter(r => r.memberId === id).length;
+      $('#detailTitle').textContent = m.name;
+      $('#detailBody').innerHTML = `
+        <div>${journey(m)}<span class="tag">${esc(group)} 기준</span></div>
+        <div class="detail-stats">
+          <div class="detail-stat"><small>조회 기간 출석</small><strong>${count}회</strong></div>
+          <div class="detail-stat"><small>이 모임 전체</small><strong>${history.length}회</strong></div>
+          <div class="detail-stat"><small>두 모임 합계</small><strong>${total}회</strong></div>
+        </div>
+        <h3>월별 출석</h3>
+        ${chart(months(v.rows.filter(r => r.memberId === id)).map(m => ({ label: m.month.slice(2).replace('-', '.'), value: m.total })), '월별 개인 출석횟수')}
+        <h3>출석 기록</h3>
+        <div class="history">
+          ${history.map(r => `<div><b>${dateLabel(r.date)}</b><span>${esc(r.group)}</span></div>`).join('') || '<div class="empty">이 모임의 기록이 없어.</div>'}
+        </div>`;
+      $('#detail').showModal();
+    }
+
+    function render() {
+      if (!data) return;
+      const v = select(data, group, period);
+      $('#content').innerHTML = tab === 'overview' ? overview(v) : tab === 'members' ? roster(v) : briefing();
+      document.querySelectorAll('[data-group]').forEach(b => {
+        b.classList.toggle('active', b.dataset.group === group);
+        b.setAttribute('aria-pressed', b.dataset.group === group);
+      });
+      document.querySelectorAll('[data-tab]').forEach(b => {
+        b.classList.toggle('active', b.dataset.tab === tab);
+        b.toggleAttribute('aria-current', b.dataset.tab === tab);
+        if (b.dataset.tab === tab) b.setAttribute('aria-current', 'page');
       });
     }
 
-    window.addEventListener('DOMContentLoaded', () => {
-      loadDashboardData();
+    // 클릭 이벤트 핸들러 (모임 변경, 탭 변경, 회원 상세, 날짜 화살표 이동, 그래프 포인트 클릭)
+    document.addEventListener('click', e => {
+      const g = e.target.closest('[data-group]');
+      const t = e.target.closest('[data-tab]');
+      const m = e.target.closest('[data-member]');
+      const navBtn = e.target.closest('[data-nav-date]');
+      const chartDot = e.target.closest('[data-chart-date]');
+
+      if (g) {
+        group = g.dataset.group;
+        briefId = '';
+        selectedDate = '';
+        render();
+      }
+      if (t) {
+        tab = t.dataset.tab;
+        render();
+      }
+      if (m) {
+        detail(m.dataset.member);
+      }
+      if (navBtn && data) {
+        const v = select(data, group, period);
+        const idx = v.dates.indexOf(selectedDate);
+        if (navBtn.dataset.navDate === 'prev' && idx < v.dates.length - 1) {
+          selectedDate = v.dates[idx + 1];
+          render();
+        } else if (navBtn.dataset.navDate === 'next' && idx > 0) {
+          selectedDate = v.dates[idx - 1];
+          render();
+        }
+      }
+      if (chartDot && data) {
+        selectedDate = chartDot.dataset.chartDate;
+        render();
+      }
     });
+
+    $('#period').onchange = e => {
+      period = e.target.value;
+      selectedDate = '';
+      render();
+    };
+
+    document.addEventListener('change', e => {
+      if (e.target.id === 'scope') { scope = e.target.value; render(); }
+      if (e.target.id === 'sort') { sort = e.target.value; render(); }
+      if (e.target.id === 'briefSelect') { briefId = e.target.value; render(); }
+    });
+
+    document.addEventListener('input', e => {
+      if (e.target.id === 'search') {
+        query = e.target.value;
+        $('#rosterTable').innerHTML = table(select(data, group, period));
+      }
+    });
+
+    $('#closeDetail').onclick = () => $('#detail').close();
+    $('#detail').addEventListener('click', e => {
+      if (e.target === $('#detail')) {
+        const r = e.target.getBoundingClientRect();
+        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) e.target.close();
+      }
+    });
+
+    let loading = false, lastAttemptAt = 0;
+    let storage;
+    try { storage = window.localStorage; } catch {}
+    if (publicFeedUrl) {
+      data = readCachedFeed(storage);
+      if (data) render();
+    }
+
+    function showUpdateNote(message) {
+      const note = $('#dataNote');
+      note.replaceChildren(document.createTextNode(message));
+      if (publicFeedUrl) {
+        const button = document.createElement('button');
+        button.className = 'refresh-feed';
+        button.textContent = loading ? '확인 중…' : '최신 기록 확인';
+        button.disabled = loading;
+        button.onclick = load;
+        note.appendChild(button);
+      }
+    }
+
+    async function load() {
+      if (loading) return;
+      loading = true;
+      lastAttemptAt = Date.now();
+      showUpdateNote(publicFeedUrl
+        ? (data ? `최근 확인한 기록 · ${dateLabel(data.asOf)} 기준 · 최신 시트 확인 중…` : '최신 시트 기록을 확인하고 있어…')
+        : '저장된 기록을 불러오고 있어…');
+      try {
+        const fresh = await loadPublicFeed(publicFeedUrl);
+        data = fresh;
+        writeCachedFeed(storage, fresh);
+        render();
+        const time = new Intl.DateTimeFormat('ko-KR', {
+          timeZone: 'Asia/Seoul', month: 'numeric', day: 'numeric', hour: '2-digit', minute: '2-digit', hour12: false
+        }).format(new Date(Number.isFinite(Date.parse(fresh.loadedAt)) ? fresh.loadedAt : Date.now()));
+        showUpdateNote(`시트 연결됨 · ${time} 확인 · ${dateLabel(data.asOf)} 기준`);
+      } catch (error) {
+        console.error(error);
+        if (data) {
+          showUpdateNote(`최신 기록 확인 실패 · ${dateLabel(data.asOf)} 기준의 저장된 기록 표시 중`);
+        } else {
+          showUpdateNote('출석 기록을 불러오지 못했어.');
+          $('#content').innerHTML = '<div class="panel empty error">잠시 후 다시 시도해줘.<p><button onclick="location.reload()">다시 불러오기</button></p></div>';
+        }
+      } finally {
+        loading = false;
+        const button = $('#dataNote button');
+        if (button) {
+          button.disabled = false;
+          button.textContent = '최신 기록 확인';
+        }
+      }
+    }
+
+    load();
+
+    function syncIfVisible() {
+      if (publicFeedUrl && !document.hidden && Date.now() - lastAttemptAt >= 60000) load();
+    }
+    document.addEventListener('visibilitychange', syncIfVisible);
+    window.addEventListener('pageshow', e => { if (e.persisted) syncIfVisible(); });
+    window.addEventListener('online', () => { if (publicFeedUrl && !document.hidden) load(); });
+    setInterval(syncIfVisible, 60000);
   </script>
 </body>
 </html>
