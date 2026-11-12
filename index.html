@@ -102,9 +102,6 @@
   </div>
 
   <script>
-    /**
-     * ⚠️ 중요: 아래 GAS_WEB_APP_URL에 본인의 Google Apps Script 웹 앱 배포 주소(/exec로 끝나는 주소)를 넣어주세요.
-     */
     const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwWGnExweV-E4r5u_lNKi3Av0soVLTvt8VxwRrt0zdmuI-SdJ1JP0P_2zLKU5o5BcQ/exec";
 
     let rawData = null;
@@ -113,12 +110,19 @@
     let currentIndex = 0;
     let chartInstance = null;
 
-    window.gaDashboardReceive = function(payload) {
-      rawData = payload;
-      document.getElementById('asOfText').textContent = `기준일: ${payload.asOf}`;
-      buildSessions();
-      renderCelebrations();
-    };
+    async function loadDashboardData() {
+      try {
+        const response = await fetch(GAS_WEB_APP_URL);
+        const payload = await response.json();
+        rawData = payload;
+        document.getElementById('asOfText').textContent = `기준일: ${payload.asOf}`;
+        buildSessions();
+        renderCelebrations();
+      } catch (error) {
+        console.error('데이터 로딩 실패:', error);
+        document.getElementById('asOfText').textContent = '데이터 로드 실패 (새로고침 해주세요)';
+      }
+    }
 
     function buildSessions() {
       if (!rawData) return;
@@ -329,28 +333,8 @@
     }
 
     window.addEventListener('DOMContentLoaded', () => {
-      if (GAS_WEB_APP_URL && GAS_WEB_APP_URL.startsWith('https://script.google.com')) {
-        const script = document.createElement('script');
-        script.src = `${GAS_WEB_APP_URL}?callback=gaDashboardReceive`;
-        document.body.appendChild(script);
-      } else {
-        // 웹앱 URL 미입력 시 미리보기용 샘플 데이터 작동
-        window.gaDashboardReceive({
-          asOf: "2026-11-07",
-          members: [
-            { id: "M1", group: "신림수요", name: "신림김", journey: "25년", days: 9125, celebrations: [{ date: "2026-12-15", label: "26년" }] },
-            { id: "M2", group: "신림토요", name: "고척이", journey: "31년", days: 11315, celebrations: [] },
-            { id: "M3", group: "신림토요", name: "효자송", journey: "26년", days: 9490, celebrations: [] },
-            { id: "M4", group: "신림토요", name: "신림장", journey: "16년", days: 5840, celebrations: [{ date: "2026-11-20", label: "17년" }] },
-            { id: "M5", group: "신림토요", name: "대방허", journey: "6년", days: 2190, celebrations: [] },
-            { id: "M6", group: "신림수요", name: "연수홍", journey: "2년", days: 730, celebrations: [] },
-            { id: "M7", group: "신림수요", name: "고척윤", journey: "1년", days: 365, celebrations: [] },
-            { id: "M8", group: "신림수요", name: "신림최", journey: "4개월", days: 120, celebrations: [] },
-            { id: "M9", group: "신림토요", name: "명일홍", journey: "4개월", days: 110, celebrations: [] },
-            { id: "M10", group: "신림토요", name: "위례이", journey: "2개월", days: 75, celebrations: [{ date: "2026-11-25", label: "100일" }] },
-            { id: "M11", group: "신림토요", name: "대학박", journey: "1개월", days: 45, celebrations: [{ date: "2026-12-10", label: "100일" }] }
-          ],
-          records: [
-            { date: "2026-10-17", group: "신림토요", memberId: "M2" }, { date: "2026-10-17", group: "신림토요", memberId: "M3" }, { date: "2026-10-17", group: "신림토요", memberId: "M4" }, { date: "2026-10-17", group: "신림토요", memberId: "M5" }, { date: "2026-10-17", group: "신림토요", memberId: "M10" },
-            { date: "2026-10-21", group: "신림수요", memberId: "M1" }, { date: "2026-10-21", group: "신림수요", memberId: "M6" }, { date: "2026-10-21", group: "신림수요", memberId: "M7" },
-            { date: "2026-1
+      loadDashboardData();
+    });
+  </script>
+</body>
+</html>
