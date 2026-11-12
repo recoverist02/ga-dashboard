@@ -60,12 +60,14 @@
     .chart .value-badge{font-size:11px;font-weight:750;fill:var(--brand)}
     .caption{font-size:10px;color:var(--muted);margin:8px 0 0}
     .list{display:grid;gap:0}
-    .person{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #edf2ee;padding:9px 0;text-align:left;background:none;width:100%}
+    .person{display:flex;align-items:center;justify-content:space-between;gap:10px;border-bottom:1px solid #edf2ee;padding:9px 4px;text-align:left;background:none;width:100%;border-radius:6px;transition:background .12s}
+    .person:hover{background:#f5f9f7}
     .person:last-child{border:0}
-    .person b{font-size:13px}
+    .person b{font-size:13px;color:var(--ink)}
     .person span{font-size:12px;color:var(--muted)}
     .person .celebration,.celebration{color:var(--red);font-weight:700}
-    .tag{background:var(--soft);color:var(--brand);font-size:10px;border-radius:6px;padding:2px 6px;margin-left:6px}
+    .tag{background:var(--soft);color:var(--brand);font-size:10px;border-radius:6px;padding:2px 6px;margin-left:6px;display:inline-block}
+    .tag-muted{background:#edf2ee;color:var(--muted);font-size:10px;border-radius:6px;padding:2px 6px;margin-left:5px;display:inline-block}
     .empty{padding:30px 8px;color:var(--muted);text-align:center;font-size:13px}
     .tools{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
     .tools input{min-width:100px;flex:1;border:1px solid var(--line);background:white;padding:9px 12px;border-radius:9px}
@@ -76,7 +78,8 @@
     thead th{position:sticky;top:0;background:#edf3ef;z-index:2;color:var(--muted);font-weight:650}
     th:first-child,td:first-child{position:sticky;left:0;background:white;text-align:left;min-width:92px;z-index:1;border-right:1px solid var(--line)}
     thead th:first-child{z-index:3;background:#edf3ef}
-    .name-btn{background:none;padding:0;font-weight:750;text-align:left}
+    .name-btn{background:none;padding:2px 0;font-weight:750;text-align:left;width:100%;color:var(--ink)}
+    .name-btn:hover{color:var(--brand)}
     .name-btn small{display:block;color:var(--muted);font-size:10px;font-weight:400}
     .yes{color:var(--brand);font-size:17px}
     .no{color:#c7d2cb}
@@ -90,12 +93,13 @@
     .full{grid-column:1/-1}
     footer{text-align:center;font-size:11px;color:var(--muted);padding:20px 0 30px}
     footer span{font-size:10px;opacity:.8}
-    dialog{width:min(560px,calc(100% - 24px));max-height:86dvh;border:0;border-radius:19px;padding:22px;color:var(--ink);box-shadow:0 24px 90px #0c332d33}
+    dialog{width:min(560px,calc(100% - 24px));max-height:86dvh;border:0;border-radius:19px;padding:22px;color:var(--ink);box-shadow:0 24px 90px #0c332d33;background:#fff;z-index:9999}
     dialog::backdrop{background:#14342c66;backdrop-filter:blur(3px)}
+    dialog[open]{display:block}
     .dialog-head{margin-bottom:12px;align-items:flex-start}
     .dialog-head small{font-size:10px;letter-spacing:.12em;color:var(--muted)}
     .dialog-head h2{margin:3px 0;font-size:24px}
-    .dialog-head button{background:#edf2ee;border-radius:50%;width:32px;height:32px;font-size:22px}
+    .dialog-head button{background:#edf2ee;border-radius:50%;width:32px;height:32px;font-size:22px;line-height:1}
     .detail-stats{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:7px;margin:14px 0}
     .detail-stat{background:var(--soft);border-radius:10px;padding:10px 8px}
     .detail-stat small{display:block;color:var(--muted);font-size:10px}
@@ -104,13 +108,11 @@
     .history div{display:flex;justify-content:space-between;border-bottom:1px solid var(--line);padding:8px 0;font-size:12px}
     .error button{padding:8px 12px;border-radius:9px;background:var(--soft)}
 
-    /* 회원별 출석 테이블 컴팩트 스타일 */
     #rosterTable tbody td{padding-top:2px;padding-bottom:2px;line-height:1.2}
     #rosterTable .name-btn{display:block;line-height:1.2}
     #rosterTable .name-btn small{line-height:1.2;margin:0}
     #rosterTable .yes{font-size:14px}
 
-    /* [추가] 날짜 화살표 네비게이션 및 그래프 선택 정보 배지 스타일 */
     .date-nav{display:inline-flex;align-items:center;gap:6px;background:var(--soft);padding:3px 6px;border-radius:9px}
     .nav-arrow{background:#fff;color:var(--brand);border:1px solid #c9dcd2;border-radius:6px;width:24px;height:24px;display:inline-grid;place-items:center;font-size:11px;font-weight:800;padding:0;transition:background .15s}
     .nav-arrow:hover:not(:disabled){background:var(--brand);color:#fff;border-color:var(--brand)}
@@ -170,8 +172,8 @@
 
     <div class="controls">
       <div class="groups" aria-label="모임 선택">
-        <button data-group="신림수요" class="active" aria-pressed="true">신림수요</button>
-        <button data-group="신림토요" aria-pressed="false">신림토요</button>
+        <button type="button" data-group="신림수요" class="active" aria-pressed="true">신림수요</button>
+        <button type="button" data-group="신림토요" aria-pressed="false">신림토요</button>
       </div>
       <label class="period-label">조회 기간
         <select id="period">
@@ -184,9 +186,9 @@
     </div>
 
     <nav aria-label="대시보드 메뉴">
-      <button data-tab="overview" class="active" aria-current="page">모임 현황</button>
-      <button data-tab="members">회원별 출석</button>
-      <button data-tab="briefs">브리핑</button>
+      <button type="button" data-tab="overview" class="active" aria-current="page">모임 현황</button>
+      <button type="button" data-tab="members">회원별 출석</button>
+      <button type="button" data-tab="briefs">브리핑</button>
     </nav>
 
     <div class="data-note" id="dataNote" role="status">출석 기록을 불러오고 있어…</div>
@@ -204,13 +206,12 @@
         <small>MEMBER RECORD</small>
         <h2 id="detailTitle"></h2>
       </div>
-      <button id="closeDetail" aria-label="닫기">×</button>
+      <button type="button" id="closeDetail" aria-label="닫기">×</button>
     </div>
     <div id="detailBody"></div>
   </dialog>
 
   <script>
-    // Google Apps Script 웹 앱 배포 주소
     const publicFeedUrl = "https://script.google.com/macros/s/AKfycbwWGnExweV-E4r5u_lNKi3Av0soVLTvt8VxwRrt0zdmuI-SdJ1JP0P_2zLKU5o5BcQ/exec";
     const CACHE_KEY = "ga-dashboard-cache-v1";
 
@@ -225,12 +226,23 @@
     let scope = 'active';
     let sort = 'count';
     let briefId = '';
-    let selectedDate = ''; // [추가] 화살표 및 그래프 클릭으로 선택된 모임 날짜
+    let selectedDate = '';
 
     const dateLabel = d => d ? d.slice(2).replaceAll('-', '.') : '—';
     const journey = m => `<span>${esc(m.journey || '미확인')}</span>`;
 
-    // --- model.mjs 복원 함수들 ---
+    // 마지막 도박일 계산 및 배지 표시 함수 (기준일 - 단도박 일수)
+    function lastGambleLabel(m) {
+      let iso = m.start || m.lastGambleDate || '';
+      if (!iso && m.days != null && data && data.asOf) {
+        const base = new Date(data.asOf + 'T00:00:00Z');
+        const start = new Date(base.getTime() - Number(m.days) * 86400000);
+        if (!isNaN(start)) iso = start.toISOString().slice(0, 10);
+      }
+      if (!iso) return '';
+      return `<span class="tag-muted">마지막 도박일 ${esc(iso.replaceAll('-', '.'))}</span>`;
+    }
+
     function shiftMonth(iso, amount) {
       if (!iso) return '';
       const d = new Date(iso + 'T00:00:00Z');
@@ -253,10 +265,9 @@
       const all = (feed.records || []).filter(r => r.group === grp);
       const since = per === 'all' ? '' : shiftMonth(feed.asOf, -Number(per));
       const rows = since ? all.filter(r => r.date >= since) : all;
-      // dates: 내림차순 정렬 (dates[0]이 가장 최근 출석일)
       const dates = Array.from(new Set(rows.map(r => r.date))).sort((a, b) => b.localeCompare(a));
       const activeCutoff = shiftMonth(feed.asOf, -6);
-      const active = new Set(all.filter(r => r.date >= activeCutoff).map(r => r.memberId));
+      const active = new Set(all.filter(r => r.date >= activeCutoff).map(r => String(r.memberId).trim()));
       return { all, rows, dates, since, active };
     }
 
@@ -277,23 +288,29 @@
     function memberList(feed, v, scp, q, srt) {
       const lastMap = new Map();
       v.all.forEach(r => {
-        const prev = lastMap.get(r.memberId);
-        if (!prev || r.date > prev) lastMap.set(r.memberId, r.date);
+        const mid = String(r.memberId).trim();
+        const prev = lastMap.get(mid);
+        if (!prev || r.date > prev) lastMap.set(mid, r.date);
       });
       const countMap = new Map();
       v.rows.forEach(r => {
-        countMap.set(r.memberId, (countMap.get(r.memberId) || 0) + 1);
+        const mid = String(r.memberId).trim();
+        countMap.set(mid, (countMap.get(mid) || 0) + 1);
       });
-      const inPeriod = new Set(v.rows.map(r => r.memberId));
+      const inPeriod = new Set(v.rows.map(r => String(r.memberId).trim()));
       const needle = (q || '').trim().toLowerCase();
 
       return (feed.members || [])
         .filter(m => {
-          if (scp === 'active') return v.active.has(m.id) || (m.group === group && lastMap.has(m.id) && lastMap.get(m.id) >= shiftMonth(feed.asOf, -6));
-          return inPeriod.has(m.id);
+          const mid = String(m.id).trim();
+          if (scp === 'active') return v.active.has(mid) || (m.group === group && lastMap.has(mid) && lastMap.get(mid) >= shiftMonth(feed.asOf, -6));
+          return inPeriod.has(mid);
         })
         .filter(m => !needle || String(m.name || '').toLowerCase().includes(needle))
-        .map(m => ({ ...m, count: countMap.get(m.id) || 0, last: lastMap.get(m.id) || '' }))
+        .map(m => {
+          const mid = String(m.id).trim();
+          return { ...m, id: mid, count: countMap.get(mid) || 0, last: lastMap.get(mid) || '' };
+        })
         .sort((a, b) => {
           if (srt === 'latest') {
             if (b.last !== a.last) return (b.last || '').localeCompare(a.last || '');
@@ -306,15 +323,14 @@
         });
     }
 
-    // --- feed.mjs & cache.mjs 복원 함수들 ---
     function normalizeFeed(raw) {
       if (!raw || typeof raw !== 'object') throw Error('Invalid feed');
       return {
         asOf: String(raw.asOf || new Date().toISOString().slice(0, 10)),
         loadedAt: raw.loadedAt || new Date().toISOString(),
         mode: raw.mode || 'live',
-        members: Array.isArray(raw.members) ? raw.members : [],
-        records: Array.isArray(raw.records) ? raw.records : [],
+        members: Array.isArray(raw.members) ? raw.members.map(m => ({ ...m, id: String(m.id ?? '').trim() })) : [],
+        records: Array.isArray(raw.records) ? raw.records.map(r => ({ ...r, memberId: String(r.memberId ?? '').trim() })) : [],
         briefs: Array.isArray(raw.briefs) ? raw.briefs : []
       };
     }
@@ -332,7 +348,6 @@
       try { storage.setItem(CACHE_KEY, JSON.stringify(feed)); } catch {}
     }
 
-    // JSONP(gaDashboardReceive) 방식과 일반 fetch(JSON) 방식을 모두 지원하여 에러 원천 차단
     function loadPublicFeed(url) {
       return new Promise((resolve, reject) => {
         let settled = false;
@@ -340,7 +355,6 @@
           if (!settled) { settled = true; reject(new Error('Timeout')); }
         }, 12000);
 
-        // 1차: 원래 Apps Script의 JSONP 콜백(gaDashboardReceive) 시도
         const script = document.createElement('script');
         window.gaDashboardReceive = function(payload) {
           if (settled) return;
@@ -352,7 +366,6 @@
         script.onerror = async () => {
           script.remove();
           if (settled) return;
-          // 2차: 만약 Code.gs를 일반 JSON으로 바꿨을 경우 fetch로 자동 전환
           try {
             const res = await fetch(url, { cache: 'no-store' });
             const text = await res.text();
@@ -369,12 +382,12 @@
       });
     }
 
-    // --- UI 렌더링 함수들 ---
+    // 회원 버튼 생성 (클릭 이벤트 누락 방지를 위해 onclick 직접 연결 병행)
     function person(m) {
-      return `<button class="person" data-member="${esc(m.id)}"><b>${esc(m.name)}</b>${journey(m)}</button>`;
+      const mid = esc(String(m.id).trim());
+      return `<button type="button" class="person" data-member="${mid}" onclick="window.openMemberDetail('${mid}')"><b>${esc(m.name)}</b>${journey(m)}</button>`;
     }
 
-    // [요청 3 반영] 그래프에서 특정 날짜 클릭 시 날짜·인원 표시 및 출석 명단 연동
     function chart(points, label, interactive = false) {
       if (!points.length) return '<div class="empty">표시할 출석 기록이 없어.</div>';
       const w = 640, h = 210, left = 34, right = 18, top = 28, bottom = 33;
@@ -409,13 +422,12 @@
     }
 
     function overview(v) {
-      // selectedDate가 현재 기간 내에 없으면 가장 최근 날짜(v.dates[0])로 자동 설정
       if (!selectedDate || !v.dates.includes(selectedDate)) {
         selectedDate = v.dates[0] || '';
       }
-      const dateIdx = v.dates.indexOf(selectedDate); // v.dates[0] = 최신, v.dates[length-1] = 가장 과거
-      const hasPrev = dateIdx >= 0 && dateIdx < v.dates.length - 1; // 이전(과거) 기록 존재 여부
-      const hasNext = dateIdx > 0; // 다음(최신 방향) 기록 존재 여부
+      const dateIdx = v.dates.indexOf(selectedDate);
+      const hasPrev = dateIdx >= 0 && dateIdx < v.dates.length - 1;
+      const hasNext = dateIdx > 0;
       const isLatest = dateIdx === 0;
 
       const selectedRows = v.rows.filter(r => r.date === selectedDate);
@@ -430,7 +442,7 @@
       const max = Math.max(1, ...monthly.map(m => m.average));
       const celebrationMonth = m => m.celebrations.map(c => c.date.slice(0, 7)).sort()[0];
       const celebrate = data.members
-        .filter(m => m.group === group && v.active.has(m.id) && m.celebrations?.length)
+        .filter(m => m.group === group && v.active.has(String(m.id).trim()) && m.celebrations?.length)
         .sort((a, b) => celebrationMonth(a).localeCompare(celebrationMonth(b)) || compareJourney(a, b));
 
       return `
@@ -497,7 +509,7 @@
               </div>
             </div>
             <div class="list">
-              ${selectedRows.map(r => data.members.find(m => m.id === r.memberId)).filter(Boolean).sort(compareJourney).map(person).join('') || '<div class="empty">출석 기록이 없어.</div>'}
+              ${selectedRows.map(r => data.members.find(m => String(m.id).trim() === String(r.memberId).trim())).filter(Boolean).sort(compareJourney).map(person).join('') || '<div class="empty">출석 기록이 없어.</div>'}
             </div>
           </section>
 
@@ -506,7 +518,10 @@
               <h2>다가오는 잔치</h2>
               <span>이번 달 · 다음 달</span>
             </div>
-            ${celebrate.map(m => `<button class="person" data-member="${esc(m.id)}"><b>${esc(m.name)}</b><span class="celebration">${m.celebrations.map(c => `${c.date.slice(2, 4)}년 ${Number(c.date.slice(5, 7))}월 · ${esc(c.label)}`).join('<br>')}</span></button>`).join('') || '<div class="empty">등록된 잔치 일정이 없어.</div>'}
+            ${celebrate.map(m => {
+              const mid = esc(String(m.id).trim());
+              return `<button type="button" class="person" data-member="${mid}" onclick="window.openMemberDetail('${mid}')"><b>${esc(m.name)}</b><span class="celebration">${m.celebrations.map(c => `${c.date.slice(2, 4)}년 ${Number(c.date.slice(5, 7))}월 · ${esc(c.label)}`).join('<br>')}</span></button>`;
+            }).join('') || '<div class="empty">등록된 잔치 일정이 없어.</div>'}
             <p class="caption">해당 모임 소속 · 최근 6개월 참석 회원 기준 · 해당 월 말까지 표시</p>
           </section>
         </div>`;
@@ -533,7 +548,7 @@
 
     function table(v) {
       const list = memberList(data, v, scope, query, sort);
-      const attended = new Set(v.rows.map(r => r.memberId + '|' + r.date));
+      const attended = new Set(v.rows.map(r => String(r.memberId).trim() + '|' + r.date));
       return `
         <p class="subtitle">${list.length}명 · ${v.dates.length}회 모임</p>
         <div class="table-wrap">
@@ -547,13 +562,16 @@
               </tr>
             </thead>
             <tbody>
-              ${list.map(m => `
+              ${list.map(m => {
+                const mid = esc(String(m.id).trim());
+                return `
                 <tr>
-                  <td><button class="name-btn" data-member="${esc(m.id)}">${esc(m.name)}<small>최근 ${dateLabel(m.last)}</small></button></td>
+                  <td><button type="button" class="name-btn" data-member="${mid}" onclick="window.openMemberDetail('${mid}')">${esc(m.name)}<small>최근 ${dateLabel(m.last)}</small></button></td>
                   <td>${journey(m)}</td>
                   <td class="count">${m.count}회</td>
                   ${v.dates.map(d => `<td class="${attended.has(m.id + '|' + d) ? 'yes' : 'no'}" aria-label="${esc(m.name)} ${d} ${attended.has(m.id + '|' + d) ? '참석' : '명단에 없음'}">${attended.has(m.id + '|' + d) ? '●' : '·'}</td>`).join('')}
-                </tr>`).join('') || '<tr><td colspan="3">조건에 맞는 회원이 없어.</td></tr>'}
+                </tr>`;
+              }).join('') || '<tr><td colspan="3">조건에 맞는 회원이 없어.</td></tr>'}
             </tbody>
           </table>
         </div>`;
@@ -573,13 +591,18 @@
           : '<div class="panel empty">저장된 브리핑이 없어.</div>'}`;
     }
 
+    // 회원 상세 팝업 열기 함수 (전역 등록 및 dialog 안전 호출)
     function detail(id) {
-      const m = data.members.find(m => m.id === id);
+      if (!data || !id) return;
+      const cleanId = String(id).trim();
+      const m = data.members.find(x => String(x.id).trim() === cleanId);
       if (!m) return;
+
       const v = select(data, group, period);
-      const history = v.all.filter(r => r.memberId === id).sort((a, b) => b.date.localeCompare(a.date));
-      const count = v.rows.filter(r => r.memberId === id).length;
-      const total = data.records.filter(r => r.memberId === id).length;
+      const history = v.all.filter(r => String(r.memberId).trim() === cleanId).sort((a, b) => b.date.localeCompare(a.date));
+      const count = v.rows.filter(r => String(r.memberId).trim() === cleanId).length;
+      const total = data.records.filter(r => String(r.memberId).trim() === cleanId).length;
+
       $('#detailTitle').textContent = m.name;
       $('#detailBody').innerHTML = `
         <div>${journey(m)}<span class="tag">${esc(group)} 기준</span>${lastGambleLabel(m)}</div>
@@ -589,13 +612,25 @@
           <div class="detail-stat"><small>두 모임 합계</small><strong>${total}회</strong></div>
         </div>
         <h3>월별 출석</h3>
-        ${chart(months(v.rows.filter(r => r.memberId === id)).map(m => ({ label: m.month.slice(2).replace('-', '.'), value: m.total })), '월별 개인 출석횟수')}
+        ${chart(months(v.rows.filter(r => String(r.memberId).trim() === cleanId)).map(x => ({ label: x.month.slice(2).replace('-', '.'), value: x.total })), '월별 개인 출석횟수')}
         <h3>출석 기록</h3>
         <div class="history">
           ${history.map(r => `<div><b>${dateLabel(r.date)}</b><span>${esc(r.group)}</span></div>`).join('') || '<div class="empty">이 모임의 기록이 없어.</div>'}
         </div>`;
-      $('#detail').showModal();
+
+      const dlg = $('#detail');
+      try {
+        if (dlg.open) dlg.close();
+        if (typeof dlg.showModal === 'function') {
+          dlg.showModal();
+        } else {
+          dlg.setAttribute('open', 'open');
+        }
+      } catch (e) {
+        dlg.setAttribute('open', 'open');
+      }
     }
+    window.openMemberDetail = detail;
 
     function render() {
       if (!data) return;
@@ -612,26 +647,31 @@
       });
     }
 
-    // 클릭 이벤트 핸들러 (모임 변경, 탭 변경, 회원 상세, 날짜 화살표 이동, 그래프 포인트 클릭)
     document.addEventListener('click', e => {
-      const g = e.target.closest('[data-group]');
-      const t = e.target.closest('[data-tab]');
-      const m = e.target.closest('[data-member]');
-      const navBtn = e.target.closest('[data-nav-date]');
-      const chartDot = e.target.closest('[data-chart-date]');
+      const target = e.target instanceof Element ? e.target : e.target.parentElement;
+      if (!target) return;
+
+      const g = target.closest('[data-group]');
+      const t = target.closest('[data-tab]');
+      const m = target.closest('[data-member]');
+      const navBtn = target.closest('[data-nav-date]');
+      const chartDot = target.closest('[data-chart-date]');
 
       if (g) {
         group = g.dataset.group;
         briefId = '';
         selectedDate = '';
         render();
+        return;
       }
       if (t) {
         tab = t.dataset.tab;
         render();
+        return;
       }
       if (m) {
         detail(m.dataset.member);
+        return;
       }
       if (navBtn && data) {
         const v = select(data, group, period);
@@ -643,6 +683,7 @@
           selectedDate = v.dates[idx - 1];
           render();
         }
+        return;
       }
       if (chartDot && data) {
         selectedDate = chartDot.dataset.chartDate;
@@ -669,11 +710,20 @@
       }
     });
 
-    $('#closeDetail').onclick = () => $('#detail').close();
+    $('#closeDetail').onclick = () => {
+      const dlg = $('#detail');
+      if (typeof dlg.close === 'function') dlg.close();
+      dlg.removeAttribute('open');
+    };
+
     $('#detail').addEventListener('click', e => {
-      if (e.target === $('#detail')) {
-        const r = e.target.getBoundingClientRect();
-        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) e.target.close();
+      const dlg = $('#detail');
+      if (e.target === dlg) {
+        const r = dlg.getBoundingClientRect();
+        if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) {
+          if (typeof dlg.close === 'function') dlg.close();
+          dlg.removeAttribute('open');
+        }
       }
     });
 
@@ -690,6 +740,7 @@
       note.replaceChildren(document.createTextNode(message));
       if (publicFeedUrl) {
         const button = document.createElement('button');
+        button.type = 'button';
         button.className = 'refresh-feed';
         button.textContent = loading ? '확인 중…' : '최신 기록 확인';
         button.disabled = loading;
@@ -720,7 +771,7 @@
           showUpdateNote(`최신 기록 확인 실패 · ${dateLabel(data.asOf)} 기준의 저장된 기록 표시 중`);
         } else {
           showUpdateNote('출석 기록을 불러오지 못했어.');
-          $('#content').innerHTML = '<div class="panel empty error">잠시 후 다시 시도해줘.<p><button onclick="location.reload()">다시 불러오기</button></p></div>';
+          $('#content').innerHTML = '<div class="panel empty error">잠시 후 다시 시도해줘.<p><button type="button" onclick="location.reload()">다시 불러오기</button></p></div>';
         }
       } finally {
         loading = false;
