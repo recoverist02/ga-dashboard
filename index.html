@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>신림 GA 출석 대시보드</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    @import url('https://cdn.jsdelivr.net/gh/orioncactus/pretendard/dist/web/static/pretendard.css');
+    body { font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, sans-serif; }
+  </style>
+</head>
+<body class="bg-slate-50 text-slate-800 min-h-screen pb-12">
+
+  <div class="max-w-4xl mx-auto px-4 pt-6 space-y-6">
+    <!-- 상단 헤더 & 모임 필터 -->
+    <header class="bg-white rounded-2xl shadow-sm p-5 border border-slate-200/70 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+      <div>
+        <div class="flex items-center gap-2">
+          <span class="px-2.5 py-0.5 text-xs font-bold rounded-full bg-emerald-100 text-emerald-700">LIVE</span>
+          <span id="asOfText" class="text-xs text-slate-400">데이터 불러오는 중...</span>
+        </div>
+        <h1 class="text-2xl font-extrabold text-slate-900 mt-1">🌱 신림 GA 출석 대시보드</h1>
+      </div>
+
+      <!-- 모임 필터 탭 -->
+      <div class="inline-flex bg-slate-100 p-1 rounded-xl self-start sm:self-auto">
+        <button onclick="setGroupFilter('ALL')" id="tab-ALL" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-slate-900 shadow-sm">전체</button>
+        <button onclick="setGroupFilter('신림수요')" id="tab-신림수요" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-slate-900">신림수요</button>
+        <button onclick="setGroupFilter('신림토요')" id="tab-신림토요" class="px-3.5 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-slate-900">신림토요</button>
+      </div>
+    </header>
+
+    <!-- [요청 2] 회차별 출석 조회 (양옆 화살표로 이전/다음 기록 이동) -->
+    <section class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200/70">
+      <div class="flex items-center justify-between border-b border-slate-100 pb-4 mb-5">
+        <button id="prevBtn" onclick="navigateSession(-1)" 
+                class="flex items-center gap-1 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition font-semibold text-sm text-slate-700">
+          ◀ <span class="hidden sm:inline">이전 출석</span>
+        </button>
+
+        <div class="text-center">
+          <div class="flex items-center justify-center gap-1.5 mb-1">
+            <span id="sessionGroupBadge" class="px-2.5 py-0.5 rounded-md text-xs font-bold bg-indigo-50 text-indigo-600">모임</span>
+            <span id="sessionOrderBadge" class="px-2 py-0.5 rounded-md text-xs font-medium bg-slate-100 text-slate-500">최근 출석</span>
+          </div>
+          <h2 id="sessionDateTitle" class="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight">
+            YYYY-MM-DD
+          </h2>
+        </div>
+
+        <button id="nextBtn" onclick="navigateSession(1)" 
+                class="flex items-center gap-1 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 active:scale-95 disabled:opacity-30 disabled:pointer-events-none transition font-semibold text-sm text-slate-700">
+          <span class="hidden sm:inline">다음 출석</span> ▶
+        </button>
+      </div>
+
+      <!-- 선택된 날짜의 출석 요약 & 명단 -->
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-start">
+        <div class="bg-blue-50/70 border border-blue-100 rounded-xl p-4 text-center">
+          <p class="text-xs font-semibold text-blue-600">참석 인원</p>
+          <p id="sessionCount" class="text-3xl font-black text-blue-700 mt-1">-명</p>
+        </div>
+
+        <div class="md:col-span-3 bg-slate-50 rounded-xl p-4 border border-slate-100">
+          <p class="text-xs font-bold text-slate-400 mb-2.5">출석 회원 명단 (단도박 기간)</p>
+          <div id="attendeeBadges" class="flex flex-wrap gap-2"></div>
+        </div>
+      </div>
+
+      <!-- 해당 회차 브리핑 기록이 있을 경우 표시 -->
+      <div id="briefBox" class="mt-4 hidden bg-emerald-50/60 border border-emerald-100 rounded-xl p-4">
+        <p class="text-xs font-bold text-emerald-700 mb-1">📋 모임 브리핑 기록</p>
+        <pre id="briefText" class="text-xs sm:text-sm text-slate-700 whitespace-pre-wrap font-sans leading-relaxed"></pre>
+      </div>
+    </section>
+
+    <!-- [요청 3] 회차별 참석인원 그래프 (특정 날짜 클릭 시 간략 정보 표시) -->
+    <section class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200/70">
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
+        <div>
+          <h3 class="text-lg font-bold text-slate-900">📊 회차별 참석인원 추이</h3>
+          <p class="text-xs text-slate-500 mt-0.5">그래프의 점을 누르면 해당 날짜와 참석인원이 표시되고 위 출석부가 전환됩니다.</p>
+        </div>
+        <!-- 클릭한 위치의 날짜와 참석인원 표시 배지 -->
+        <div id="clickedPointInfo" class="px-4 py-2 rounded-xl bg-indigo-50 border border-indigo-100 text-sm font-bold text-indigo-800 self-start sm:self-auto">
+          👆 그래프에서 날짜 위치를 눌러보세요
+        </div>
+      </div>
+
+      <div class="relative h-64 w-full">
+        <canvas id="attendanceChart"></canvas>
+      </div>
+    </section>
+
+    <!-- 다가오는 잔치 (100일 / 주년) 섹션 -->
+    <section class="bg-white rounded-2xl shadow-sm p-6 border border-slate-200/70">
+      <h3 class="text-lg font-bold text-slate-900 mb-3">🎉 다가오는 잔치 (이번 달 · 다음 달)</h3>
+      <div id="celebrationList" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3"></div>
+    </section>
+  </div>
+
+  <script>
+    /**
+     * ⚠️ 중요: 아래 GAS_WEB_APP_URL에 본인의 Google Apps Script 웹 앱 배포 주소(/exec로 끝나는 주소)를 넣어주세요.
+     */
+    const GAS_WEB_APP_URL = "https://script.google.com/macros/s/AKfycbwWGnExweV-E4r5u_lNKi3Av0soVLTvt8VxwRrt0zdmuI-SdJ1JP0P_2zLKU5o5BcQ/exec";
+
+    let rawData = null;
+    let currentGroup = 'ALL';
+    let sessions = [];
+    let currentIndex = 0;
+    let chartInstance = null;
+
+    window.gaDashboardReceive = function(payload) {
+      rawData = payload;
+      document.getElementById('asOfText').textContent = `기준일: ${payload.asOf}`;
+      buildSessions();
+      renderCelebrations();
+    };
+
+    function buildSessions() {
+      if (!rawData) return;
+      const memberMap = {};
+      (rawData.members || []).forEach(m => { memberMap[m.id] = m; });
+
+      const briefMap = {};
+      (rawData.briefs || []).forEach(b => {
+        briefMap[`${b.group}|${b.date}`] = b.message;
+      });
+
+      const grouped = {};
+      (rawData.records || []).forEach(r => {
+        if (currentGroup !== 'ALL' && r.group !== currentGroup) return;
+        const key = `${r.date}|${r.group}`;
+        if (!grouped[key]) {
+          grouped[key] = { date: r.date, group: r.group, attendees: [], brief: briefMap[`${r.group}|${r.date}`] || '' };
+        }
+        const m = memberMap[r.memberId];
+        grouped[key].attendees.push({
+          id: r.memberId,
+          name: m ? m.name : r.memberId,
+          journey: m && m.journey ? m.journey : '미확인',
+          days: m && m.days != null ? m.days : -1
+        });
+      });
+
+      sessions = Object.values(grouped).sort((a, b) => a.date.localeCompare(b.date) || a.group.localeCompare(b.group));
+      sessions.forEach(s => { s.attendees.sort((a, b) => b.days - a.days); });
+
+      currentIndex = Math.max(0, sessions.length - 1);
+      renderCurrentSession();
+      renderChart();
+    }
+
+    function setGroupFilter(group) {
+      currentGroup = group;
+      ['ALL', '신림수요', '신림토요'].forEach(g => {
+        const btn = document.getElementById(`tab-${g}`);
+        if (g === group) {
+          btn.className = "px-3.5 py-1.5 rounded-lg text-sm font-semibold transition bg-white text-slate-900 shadow-sm";
+        } else {
+          btn.className = "px-3.5 py-1.5 rounded-lg text-sm font-semibold transition text-slate-600 hover:text-slate-900";
+        }
+      });
+      buildSessions();
+    }
+
+    function navigateSession(step) {
+      const next = currentIndex + step;
+      if (next >= 0 && next < sessions.length) {
+        currentIndex = next;
+        renderCurrentSession();
+        highlightChartPoint(currentIndex);
+      }
+    }
+
+    function renderCurrentSession() {
+      if (sessions.length === 0) {
+        document.getElementById('sessionDateTitle').textContent = '출석 기록 없음';
+        document.getElementById('sessionCount').textContent = '0명';
+        document.getElementById('attendeeBadges').innerHTML = '';
+        document.getElementById('prevBtn').disabled = true;
+        document.getElementById('nextBtn').disabled = true;
+        return;
+      }
+
+      const s = sessions[currentIndex];
+      const isLatest = (currentIndex === sessions.length - 1);
+      const daysKo = ['일', '월', '화', '수', '목', '금', '토'];
+      const dObj = new Date(s.date + 'T00:00:00');
+      const dayName = daysKo[dObj.getDay()];
+
+      document.getElementById('sessionGroupBadge').textContent = s.group;
+      document.getElementById('sessionGroupBadge').className = s.group === '신림수요'
+        ? 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-sky-100 text-sky-700'
+        : 'px-2.5 py-0.5 rounded-md text-xs font-bold bg-amber-100 text-amber-800';
+
+      document.getElementById('sessionOrderBadge').textContent = isLatest
+        ? '✨ 가장 최근 출석'
+        : `이전 기록 (${currentIndex + 1} / ${sessions.length})`;
+
+      document.getElementById('sessionDateTitle').textContent = `${s.date} (${dayName})`;
+      document.getElementById('sessionCount').textContent = `${s.attendees.length}명`;
+
+      const container = document.getElementById('attendeeBadges');
+      container.innerHTML = '';
+      s.attendees.forEach(a => {
+        const badge = document.createElement('span');
+        badge.className = 'inline-flex items-center gap-1 px-3 py-1.5 rounded-xl bg-white border border-slate-200 text-sm font-semibold text-slate-800 shadow-2xs';
+        badge.innerHTML = `${a.name} <span class="text-xs font-normal text-slate-400">(${a.journey})</span>`;
+        container.appendChild(badge);
+      });
+
+      const briefBox = document.getElementById('briefBox');
+      if (s.brief) {
+        briefBox.classList.remove('hidden');
+        document.getElementById('briefText').textContent = s.brief;
+      } else {
+        briefBox.classList.add('hidden');
+      }
+
+      document.getElementById('prevBtn').disabled = (currentIndex <= 0);
+      document.getElementById('nextBtn').disabled = (currentIndex >= sessions.length - 1);
+
+      document.getElementById('clickedPointInfo').innerHTML =
+        `📅 <span>${s.date} (${s.group})</span> &nbsp;·&nbsp; 👥 참석인원: <strong class="text-indigo-600">${s.attendees.length}명</strong>`;
+    }
+
+    function renderChart() {
+      const ctx = document.getElementById('attendanceChart').getContext('2d');
+      if (chartInstance) chartInstance.destroy();
+
+      const labels = sessions.map(s => s.date.slice(5));
+      const counts = sessions.map(s => s.attendees.length);
+
+      chartInstance = new Chart(ctx, {
+        type: 'line',
+        data: {
+          labels: labels,
+          datasets: [{
+            label: '참석인원',
+            data: counts,
+            borderColor: '#4f46e5',
+            backgroundColor: 'rgba(79, 70, 229, 0.1)',
+            borderWidth: 2.5,
+            pointRadius: sessions.map((_, i) => i === currentIndex ? 7 : 4),
+            pointBackgroundColor: sessions.map((_, i) => i === currentIndex ? '#4f46e5' : '#ffffff'),
+            pointBorderColor: '#4f46e5',
+            pointBorderWidth: 2.5,
+            pointHoverRadius: 8,
+            fill: true,
+            tension: 0.25
+          }]
+        },
+        options: {
+          responsive: true,
+          maintainAspectRatio: false,
+          interaction: { mode: 'nearest', intersect: false },
+          plugins: {
+            legend: { display: false },
+            tooltip: {
+              backgroundColor: 'rgba(15, 23, 42, 0.92)',
+              padding: 12,
+              displayColors: false,
+              callbacks: {
+                title: (items) => {
+                  const s = sessions[items[0].dataIndex];
+                  return `📅 날짜: ${s.date} (${s.group})`;
+                },
+                label: (item) => `👥 참석인원: ${item.raw}명`
+              }
+            }
+          },
+          onClick: (event, elements) => {
+            if (elements.length > 0) {
+              const idx = elements[0].index;
+              currentIndex = idx;
+              renderCurrentSession();
+              highlightChartPoint(idx);
+            }
+          },
+          scales: {
+            y: {
+              beginAtZero: true,
+              ticks: { stepSize: 2, callback: (v) => v + '명' }
+            }
+          }
+        }
+      });
+    }
+
+    function highlightChartPoint(selectedIdx) {
+      if (!chartInstance) return;
+      const ds = chartInstance.data.datasets[0];
+      ds.pointRadius = sessions.map((_, i) => i === selectedIdx ? 7 : 4);
+      ds.pointBackgroundColor = sessions.map((_, i) => i === selectedIdx ? '#4f46e5' : '#ffffff');
+      chartInstance.update();
+    }
+
+    function renderCelebrations() {
+      const container = document.getElementById('celebrationList');
+      container.innerHTML = '';
+      const list = [];
+      (rawData.members || []).forEach(m => {
+        (m.celebrations || []).forEach(c => {
+          list.push({ name: m.name, group: m.group, date: c.date, label: c.label });
+        });
+      });
+      list.sort((a, b) => a.date.localeCompare(b.date));
+
+      if (list.length === 0) {
+        container.innerHTML = '<p class="text-sm text-slate-400">예정된 잔치가 없습니다.</p>';
+        return;
+      }
+      list.forEach(item => {
+        const div = document.createElement('div');
+        div.className = 'flex items-center justify-between p-3.5 rounded-xl bg-slate-50 border border-slate-100';
+        div.innerHTML = `
+          <div>
+            <span class="text-xs font-semibold text-slate-400">${item.date} (${item.group})</span>
+            <p class="text-sm font-bold text-slate-800 mt-0.5">${item.name}</p>
+          </div>
+          <span class="px-2.5 py-1 rounded-lg bg-amber-100 text-amber-800 text-xs font-extrabold">🎉 ${item.label}</span>
+        `;
+        container.appendChild(div);
+      });
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+      if (GAS_WEB_APP_URL && GAS_WEB_APP_URL.startsWith('https://script.google.com')) {
+        const script = document.createElement('script');
+        script.src = `${GAS_WEB_APP_URL}?callback=gaDashboardReceive`;
+        document.body.appendChild(script);
+      } else {
+        // 웹앱 URL 미입력 시 미리보기용 샘플 데이터 작동
+        window.gaDashboardReceive({
+          asOf: "2026-11-07",
+          members: [
+            { id: "M1", group: "신림수요", name: "신림김", journey: "25년", days: 9125, celebrations: [{ date: "2026-12-15", label: "26년" }] },
+            { id: "M2", group: "신림토요", name: "고척이", journey: "31년", days: 11315, celebrations: [] },
+            { id: "M3", group: "신림토요", name: "효자송", journey: "26년", days: 9490, celebrations: [] },
+            { id: "M4", group: "신림토요", name: "신림장", journey: "16년", days: 5840, celebrations: [{ date: "2026-11-20", label: "17년" }] },
+            { id: "M5", group: "신림토요", name: "대방허", journey: "6년", days: 2190, celebrations: [] },
+            { id: "M6", group: "신림수요", name: "연수홍", journey: "2년", days: 730, celebrations: [] },
+            { id: "M7", group: "신림수요", name: "고척윤", journey: "1년", days: 365, celebrations: [] },
+            { id: "M8", group: "신림수요", name: "신림최", journey: "4개월", days: 120, celebrations: [] },
+            { id: "M9", group: "신림토요", name: "명일홍", journey: "4개월", days: 110, celebrations: [] },
+            { id: "M10", group: "신림토요", name: "위례이", journey: "2개월", days: 75, celebrations: [{ date: "2026-11-25", label: "100일" }] },
+            { id: "M11", group: "신림토요", name: "대학박", journey: "1개월", days: 45, celebrations: [{ date: "2026-12-10", label: "100일" }] }
+          ],
+          records: [
+            { date: "2026-10-17", group: "신림토요", memberId: "M2" }, { date: "2026-10-17", group: "신림토요", memberId: "M3" }, { date: "2026-10-17", group: "신림토요", memberId: "M4" }, { date: "2026-10-17", group: "신림토요", memberId: "M5" }, { date: "2026-10-17", group: "신림토요", memberId: "M10" },
+            { date: "2026-10-21", group: "신림수요", memberId: "M1" }, { date: "2026-10-21", group: "신림수요", memberId: "M6" }, { date: "2026-10-21", group: "신림수요", memberId: "M7" },
+            { date: "2026-1
