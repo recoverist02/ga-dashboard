@@ -1,6 +1,120 @@
 <!doctype html>
 <html lang="ko">
 <head>
+  <!-- ⚡ GA 공유 대시보드 Firebase 클라우드 초고속 로더 (구글 시트 자동 동기화 포함) -->
+<script>
+(() => {
+  const FIREBASE_PUBLIC_URL = 'https://recoverist-hub-default-rtdb.asia-southeast1.firebasedatabase.app/ga-public/dashboard.json';
+  let cloudDelivered = false;
+
+  async function readPublicCloud() {
+    try {
+      const res = await fetch(FIREBASE_PUBLIC_URL, { cache: 'no-store' });
+      if (!res.ok) return null;
+      return await res.json();
+    } catch (_) {
+      return null;
+    }
+  }
+
+  async function writePublicCloud(payload) {
+    if (!payload || !Array.isArray(payload.members)) return;
+    try {
+      await fetch(FIREBASE_PUBLIC_URL, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+    } catch (_) {}
+  }
+
+  // 1) gaDashboardReceive (JSONP 방식) 가로채기 및 클라우드 즉시 주입
+  let realReceiver = null;
+  let pendingCloudData = null;
+
+  function wrapReceiver(fn) {
+    return function(data) {
+      if (data && Array.isArray(data.members)) {
+        // 구글 시트 원본에서 온 최신 데이터면 클라우드 DB에 백그라운드 저장
+        if (!data.__fromCloud) {
+          writePublicCloud(data);
+        }
+        return fn.apply(this, arguments);
+      }
+    };
+  }
+
+  Object.defineProperty(window, 'gaDashboardReceive', {
+    configurable: true,
+    enumerable: true,
+    get() {
+      return realReceiver;
+    },
+    set(fn) {
+      if (typeof fn === 'function') {
+        realReceiver = wrapReceiver(fn);
+        if (pendingCloudData && !cloudDelivered) {
+          cloudDelivered = true;
+          setTimeout(() => realReceiver(pendingCloudData), 0);
+        }
+      } else {
+        realReceiver = fn;
+      }
+    }
+  });
+
+  // 페이지 열리자마자 0.1초 만에 Firebase 클라우드 데이터 선제 로드
+  readPublicCloud().then((cloudData) => {
+    if (cloudData && Array.isArray(cloudData.members)) {
+      cloudData.__fromCloud = true;
+      if (typeof realReceiver === 'function' && !cloudDelivered) {
+        cloudDelivered = true;
+        realReceiver(cloudData);
+      } else {
+        pendingCloudData = cloudData;
+      }
+    }
+  });
+
+  // 2) fetch 방식으로 시트 웹앱을 호출하는 경우에도 클라우드 우선 응답 + 백그라운드 시트 동기화
+  const origFetch = window.fetch.bind(window);
+  window.fetch = async (input, init) => {
+    const url = typeof input === 'string' ? input : (input && input.url ? input.url : '');
+    if (url.includes('script.google.com/macros/s/') && !url.includes('firebase')) {
+      const cloudData = await readPublicCloud();
+      if (cloudData && Array.isArray(cloudData.members)) {
+        // 백그라운드에서 구글 시트 최신본을 가져와 클라우드 갱신
+        origFetch(input, init)
+          .then(r => r.json())
+          .then(fresh => {
+            if (fresh && Array.isArray(fresh.members)) {
+              writePublicCloud(fresh);
+              if (typeof window.gaDashboardReceive === 'function') {
+                window.gaDashboardReceive(fresh);
+              }
+            }
+          })
+          .catch(() => {});
+
+        return new Response(JSON.stringify(cloudData), {
+          status: 200,
+          headers: { 'Content-Type': 'application/json' }
+        });
+      }
+      // 클라우드가 비어 있는 최초 1회 실행 시 시트에서 읽고 클라우드에 저장
+      const res = await origFetch(input, init);
+      try {
+        const cloned = await res.clone().json();
+        if (cloned && Array.isArray(cloned.members)) {
+          writePublicCloud(cloned);
+        }
+      } catch (_) {}
+      return res;
+    }
+    return origFetch(input, init);
+  };
+})();
+</script>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <meta name="robots" content="noindex,nofollow,noarchive">
