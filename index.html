@@ -374,6 +374,32 @@
       .tools select { font-size: 11px; padding: 8px 5px; max-width: 145px; }
       .detail-stat strong { font-size: 15px; }
     }
+
+    /* Compact attendance views */
+    .attendance-table { width: max-content; min-width: 100%; table-layout: fixed; }
+    .attendance-table th, .attendance-table td { min-width: 30px; width: 30px; padding: 4px 2px; font-size: 10px; line-height: 1.25; }
+    .attendance-table th:first-child, .attendance-table td:first-child { min-width: 82px; width: 82px; padding: 4px 6px; }
+    .attendance-table .name-btn { font-size: 12px; min-height: 30px; }
+    .attendance-table .name-btn small { font-size: 9px; }
+    .attendance-table .count { min-width: 34px; width: 34px; font-size: 11px; }
+    .attendance-table .yes { font-size: 0; }
+    .attendance-table .yes::after { content: ''; display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--brand); vertical-align: middle; }
+    .attendance-table .no { color: #c7d2cb; }
+    #detail { padding: 16px; }
+    #detail .dialog-head { margin-bottom: 6px; }
+    #detail h3 { font-size: 15px; margin: 12px 0 6px; }
+    #detail .detail-stats { margin: 8px 0; }
+    #detail .detail-stat { padding: 7px; }
+    .bar-scroll { overflow-x: auto; scrollbar-width: thin; }
+    .member-bars { height: 142px; display: flex; gap: 6px; align-items: stretch; min-width: 100%; width: max-content; padding: 4px 2px; }
+    .member-bar { flex: 1; min-width: 38px; display: flex; flex-direction: column; align-items: center; justify-content: flex-end; font-size: 10px; }
+    .member-bar strong { font-size: 12px; color: var(--brand); }
+    .member-bar i { display: block; width: 70%; max-width: 42px; background: var(--brand); border-radius: 4px 4px 0 0; margin-top: 2px; }
+    .member-bar span { border-top: 1px solid var(--line); width: 100%; text-align: center; padding-top: 3px; color: var(--muted); }
+    .attendance-month { display: grid; grid-template-columns: 49px 1fr 28px; gap: 6px; align-items: center; border-bottom: 1px solid var(--line); padding: 5px 0; font-size: 11px; }
+    .attendance-days { display: flex; flex-wrap: wrap; gap: 3px; }
+    .attendance-day { display: inline-grid; place-items: center; width: 26px; height: 25px; border-radius: 4px; background: var(--brand); color: white; font-size: 11px; }
+    .attendance-month > span { color: var(--muted); text-align: right; }
   </style>
 </head>
 <body>
@@ -784,7 +810,7 @@
       function roster(v) {
         return `
           <h1 class="page-title">회원별 출석</h1>
-          <p class="subtitle">${esc(group)} 출석 기준 · 단도박 기간은 ${dateLabel(data.asOf)} 기준</p>
+          <p class="subtitle">${esc(group)} 출석 기준 · 최근 날짜부터 표시</p>
           <div class="tools">
             <input id="search" type="search" placeholder="활동명 검색" aria-label="활동명 검색" value="${esc(query)}">
             <select id="scope" aria-label="회원 범위">
@@ -797,7 +823,7 @@
             </select>
           </div>
           <div id="rosterTable">${table(v)}</div>
-          <p class="caption">● 참석 기록 있음 · · 명단에 없음 · 이름을 누르면 상세 기록 · 날짜 영역은 좌우로 넘길 수 있어.</p>`;
+          <p class="caption">초록 칸: 참석 · 점: 명단에 없음 · 이름을 누르면 상세 기록 · 날짜 영역은 좌우로 넘길 수 있어.</p>`;
       }
 
       function table(v) {
@@ -806,12 +832,11 @@
         return `
           <p class="subtitle">${list.length}명 · ${v.dates.length}회 모임</p>
           <div class="table-wrap">
-            <table>
+            <table class="attendance-table">
               <thead>
                 <tr>
                   <th>활동명</th>
-                  <th>단도박 기간</th>
-                  <th>출석</th>
+                  <th class="count">출석</th>
                   ${v.dates.map((d) => `<th>${d.slice(2, 4)}년<br>${d.slice(5).replace('-', '/')}</th>`).join('')}
                 </tr>
               </thead>
@@ -819,10 +844,9 @@
                 ${list.map((m) => `
                   <tr>
                     <td><button class="name-btn" data-member="${esc(m.id)}">${esc(m.name)}<small>최근 ${dateLabel(m.last)}</small></button></td>
-                    <td>${journey(m)}</td>
                     <td class="count">${m.count}회</td>
                     ${v.dates.map((d) => `<td class="${attended.has(m.id + '|' + d) ? 'yes' : 'no'}" aria-label="${esc(m.name)} ${d} ${attended.has(m.id + '|' + d) ? '참석' : '명단에 없음'}">${attended.has(m.id + '|' + d) ? '●' : '·'}</td>`).join('')}
-                  </tr>`).join('') || '<tr><td colspan="3">조건에 맞는 회원이 없어.</td></tr>'}
+                  </tr>`).join('') || `<tr><td colspan="${v.dates.length + 2}">조건에 맞는 회원이 없어.</td></tr>`}
               </tbody>
             </table>
           </div>`;
@@ -844,6 +868,27 @@
           ` : '<div class="panel empty">저장된 브리핑이 없어.</div>'}`;
       }
 
+      function memberBars(rows, v) {
+        const totals = new Map(months(rows).map(m => [m.month, m.total]));
+        const first = period === 'all' ? (v.dates.at(-1) || data.asOf).slice(0, 7) : v.since.slice(0, 7);
+        const points = [];
+        for (let month = first + '-01'; month <= data.asOf; month = shiftMonth(month, 1)) {
+          points.push({ month: month.slice(0, 7), value: totals.get(month.slice(0, 7)) || 0 });
+        }
+        const max = Math.max(1, ...points.map(p => p.value));
+        return `<div class="bar-scroll" tabindex="0" aria-label="월별 출석 그래프, 좌우 스크롤"><div class="member-bars">${points.map(p => `<div class="member-bar" aria-label="${p.month} ${p.value}회"><strong>${p.value}회</strong><i style="height:${p.value / max * 96}px"></i><span>${p.month.slice(2).replace('-', '.')}</span></div>`).join('')}</div></div>`;
+      }
+
+      function compactHistory(history) {
+        const grouped = new Map();
+        history.forEach(r => {
+          const month = r.date.slice(0, 7);
+          if (!grouped.has(month)) grouped.set(month, []);
+          grouped.get(month).push(r);
+        });
+        return [...grouped].map(([month, rows]) => `<div class="attendance-month"><b>${month.slice(2).replace('-', '.')}</b><div class="attendance-days">${[...rows].sort((a,b) => a.date.localeCompare(b.date)).map(r => `<span class="attendance-day" title="${esc(r.date)} · ${esc(r.group)}" aria-label="${esc(r.date)} ${esc(r.group)} 참석">${r.date.slice(8)}</span>`).join('')}</div><span>${rows.length}회</span></div>`).join('') || '<p class="empty">이 모임의 기록이 없어.</p>';
+      }
+
       function detail(id) {
         const m = data.members.find((item) => item.id === id);
         if (!m) return;
@@ -862,11 +907,10 @@
             <div class="detail-stat"><small>두 모임 합계</small><strong>${total}회</strong></div>
           </div>
           <h3>월별 출석</h3>
-          ${chart(months(v.rows.filter((r) => r.memberId === id)).map((item) => ({ label: item.month.slice(2).replace('-', '.'), value: item.total })), '월별 개인 출석횟수')}
-          <h3>출석 기록</h3>
-          <div class="history">
-            ${history.map((r) => `<div><b>${dateLabel(r.date)}</b><span>${esc(r.group)}</span></div>`).join('') || '<div class="empty">이 모임의 기록이 없어.</div>'}
-          </div>`;
+          ${memberBars(v.rows.filter((r) => r.memberId === id), v)}
+          <h3>출석 기록 <small style="font-size:11px;color:var(--muted)">${esc(group)} · 전체</small></h3>
+          <p class="caption">월별 출석일 · 초록 칸의 숫자는 일자야.</p>
+          <div class="attendance-history">${compactHistory(history)}</div>`;
         $('#detail').showModal();
       }
 
