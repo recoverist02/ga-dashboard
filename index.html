@@ -907,7 +907,8 @@
             <div class="detail-stat"><small>두 모임 합계</small><strong>${total}회</strong></div>
           </div>
           <h3>월별 출석</h3>
-          ${memberBars(v.rows.filter((r) => r.memberId === id), v)}
+          <p class="caption">표시된 달의 전체 출석 기준 · 조회 기간 합계와는 범위가 다를 수 있어.</p>
+          ${memberBars(history, v)}
           <h3>출석 기록 <small style="font-size:11px;color:var(--muted)">${esc(group)} · 전체</small></h3>
           <p class="caption">월별 출석일 · 초록 칸의 숫자는 일자야.</p>
           <div class="attendance-history">${compactHistory(history)}</div>`;
