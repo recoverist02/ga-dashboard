@@ -379,8 +379,8 @@
     .attendance-table { width: max-content; min-width: 100%; table-layout: fixed; }
     .attendance-table th, .attendance-table td { min-width: 30px; width: 30px; padding: 4px 2px; font-size: 10px; line-height: 1.25; }
     .attendance-table th:first-child, .attendance-table td:first-child { min-width: 82px; width: 82px; padding: 4px 6px; }
-    .attendance-table .name-btn { font-size: 12px; min-height: 30px; }
-    .attendance-table .name-btn small { font-size: 9px; }
+    .attendance-table .name-btn { display: block; width: 100%; font-size: 12px; min-height: 24px; line-height: 24px; }
+    .attendance-table tbody td { padding-top: 1px; padding-bottom: 1px; }
     .attendance-table .count { min-width: 34px; width: 34px; font-size: 11px; }
     .attendance-table .yes { font-size: 0; }
     .attendance-table .yes::after { content: ''; display: inline-block; width: 12px; height: 12px; border-radius: 3px; background: var(--brand); vertical-align: middle; }
@@ -843,7 +843,7 @@
               <tbody>
                 ${list.map((m) => `
                   <tr>
-                    <td><button class="name-btn" data-member="${esc(m.id)}">${esc(m.name)}<small>최근 ${dateLabel(m.last)}</small></button></td>
+                    <td><button class="name-btn" data-member="${esc(m.id)}">${esc(m.name)}</button></td>
                     <td class="count">${m.count}회</td>
                     ${v.dates.map((d) => `<td class="${attended.has(m.id + '|' + d) ? 'yes' : 'no'}" aria-label="${esc(m.name)} ${d} ${attended.has(m.id + '|' + d) ? '참석' : '명단에 없음'}">${attended.has(m.id + '|' + d) ? '●' : '·'}</td>`).join('')}
                   </tr>`).join('') || `<tr><td colspan="${v.dates.length + 2}">조건에 맞는 회원이 없어.</td></tr>`}
