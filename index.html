@@ -32,6 +32,127 @@
       outline: 3px solid #dbad4e;
       outline-offset: 2px;
     }
+    [hidden] { display: none !important; }
+
+    /* ===== 비밀번호 잠금 화면 ===== */
+    .lock-screen {
+      min-height: 100dvh;
+      display: grid;
+      place-items: center;
+      padding: 20px;
+      background: var(--bg);
+    }
+    .lock-card {
+      width: min(390px, 100%);
+      background: var(--paper);
+      border: 1px solid var(--line);
+      border-radius: 22px;
+      padding: 28px 24px 24px;
+      box-shadow: 0 18px 50px #146e6314;
+      text-align: center;
+    }
+    .lock-card.shake {
+      animation: lockShake .36s ease;
+    }
+    @keyframes lockShake {
+      0%, 100% { transform: translateX(0); }
+      20%, 60% { transform: translateX(-7px); }
+      40%, 80% { transform: translateX(7px); }
+    }
+    .lock-logo {
+      margin: 0 auto 14px;
+    }
+    .lock-title {
+      margin: 0;
+      font-size: 21px;
+      font-weight: 800;
+      letter-spacing: -.04em;
+    }
+    .lock-sub {
+      margin: 6px 0 20px;
+      font-size: 13px;
+      color: var(--muted);
+    }
+    .pin-field {
+      position: relative;
+      display: flex;
+      align-items: center;
+      margin-bottom: 12px;
+    }
+    .pin-field input {
+      width: 100%;
+      border: 1.5px solid var(--line);
+      border-radius: 12px;
+      padding: 12px 44px 12px 14px;
+      font-size: 16px;
+      background: #fafcfb;
+      letter-spacing: .12em;
+      text-align: center;
+    }
+    .pin-field input:focus {
+      border-color: var(--brand);
+      background: #fff;
+    }
+    .pin-toggle {
+      position: absolute;
+      right: 8px;
+      width: 32px;
+      height: 32px;
+      border-radius: 8px;
+      background: transparent;
+      color: var(--muted);
+      font-size: 14px;
+      display: grid;
+      place-items: center;
+    }
+    .pin-toggle:hover { background: var(--soft); color: var(--brand); }
+    .keep-row {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 7px;
+      margin: 4px 0 16px;
+      font-size: 13px;
+      color: var(--ink);
+      cursor: pointer;
+      user-select: none;
+    }
+    .keep-row input {
+      width: 16px;
+      height: 16px;
+      accent-color: var(--brand);
+      cursor: pointer;
+    }
+    .lock-submit {
+      width: 100%;
+      padding: 13px 16px;
+      border-radius: 12px;
+      background: var(--brand);
+      color: #fff;
+      font-size: 15px;
+      font-weight: 750;
+      transition: opacity .15s, transform .1s;
+    }
+    .lock-submit:hover:not(:disabled) { opacity: .93; }
+    .lock-submit:active:not(:disabled) { transform: scale(.99); }
+    .lock-submit:disabled { opacity: .6; cursor: wait; }
+    .lock-error {
+      min-height: 20px;
+      margin: 12px 0 0;
+      font-size: 12px;
+      font-weight: 650;
+      color: var(--red);
+    }
+    .lock-hint {
+      margin: 14px 0 0;
+      padding-top: 12px;
+      border-top: 1px solid #edf2ee;
+      font-size: 11px;
+      color: var(--muted);
+      line-height: 1.55;
+    }
+
+    /* ===== 대시보드 기존 스타일 ===== */
     header, .controls, .identity, .dialog-head, .section-head {
       display: flex;
       align-items: center;
@@ -65,6 +186,13 @@
       color: #d5b362;
       font-size: 9px;
     }
+    .header-actions {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: flex-end;
+    }
     .readonly {
       font-size: 11px;
       border: 1px solid #c9dcd2;
@@ -72,7 +200,20 @@
       padding: 4px 9px;
       white-space: nowrap;
       color: var(--brand);
+      background: var(--paper);
     }
+    .lock-btn {
+      font-size: 11px;
+      font-weight: 700;
+      border: 1px solid #d9c8cb;
+      border-radius: 20px;
+      padding: 4px 10px;
+      white-space: nowrap;
+      color: var(--red);
+      background: #fff;
+      transition: background .15s;
+    }
+    .lock-btn:hover { background: #fdf3f4; }
     .controls { gap: 12px; }
     .groups {
       display: flex;
@@ -403,7 +544,28 @@
   </style>
 </head>
 <body>
-  <div class="shell">
+  <!-- ===== 비밀번호 잠금 화면 ===== -->
+  <section id="lockScreen" class="lock-screen" aria-label="대시보드 비밀번호 입력">
+    <form id="lockForm" class="lock-card" autocomplete="off">
+      <div class="logo lock-logo">GA<span>●</span></div>
+      <h1 class="lock-title">함께 이어가는 회복</h1>
+      <p class="lock-sub">신림수요 · 신림토요 모임 전용 대시보드입니다.<br>안내받은 비밀번호를 입력해 주세요.</p>
+      <div class="pin-field">
+        <input id="pinInput" type="password" inputmode="numeric" placeholder="비밀번호 입력" aria-label="비밀번호" required>
+        <button type="button" id="pinToggle" class="pin-toggle" aria-label="비밀번호 표시 전환">👁</button>
+      </div>
+      <label class="keep-row">
+        <input type="checkbox" id="keepLogin" checked>
+        <span>7일간 로그인 유지</span>
+      </label>
+      <button type="submit" id="unlockBtn" class="lock-submit">대시보드 열기</button>
+      <p id="lockError" class="lock-error" role="alert"></p>
+      <p class="lock-hint">공용 기기에서는 '7일간 로그인 유지'를 해제하거나<br>조회 후 상단의 🔒 잠금 버튼을 눌러 주세요.</p>
+    </form>
+  </section>
+
+  <!-- ===== GA 공유 대시보드 본문 (인증 통과 후 표시) ===== -->
+  <div id="appShell" class="shell" hidden>
     <header>
       <div class="identity">
         <span class="logo">GA<span>●</span></span>
@@ -412,7 +574,10 @@
           <small>신림수요 · 신림토요 모임 대시보드</small>
         </div>
       </div>
-      <span class="readonly">조회 전용</span>
+      <div class="header-actions">
+        <span class="readonly" id="authBadge">조회 전용</span>
+        <button type="button" class="lock-btn" id="lockBtn" title="로그아웃 및 잠금">🔒 잠금</button>
+      </div>
     </header>
 
     <div class="controls">
@@ -464,10 +629,19 @@
       const GAS_PUBLIC_URL = 'https://script.google.com/macros/s/AKfycbwWGnExweV-E4r5u_lNKi3Av0soVLTvt8VxwRrt0zdmuI-SdJ1JP0P_2zLKU5o5BcQ/exec';
       const CACHE_KEY = 'ga-public-dashboard-cache-v2';
 
+      // ===== 4단계 비밀번호 인증 설정 =====
+      const PIN_SALT = 'ga_sillim_salt_v1'; // Apps Script의 PIN_SALT와 동일해야 함
+      const AUTH_STORAGE_KEY = 'ga_dashboard_auth_v1';
+      const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
+
       const $ = (s) => document.querySelector(s);
       const esc = (v) => String(v ?? '').replace(/[&<>"']/g, (c) => ({
         '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
       }[c]));
+
+      let activeToken = '';
+      let authExpiresAt = 0;
+      let dashboardBooted = false;
 
       let data = null;
       let group = '신림수요';
@@ -480,7 +654,199 @@
       let selectedSessionDate = '';
       let loading = false;
 
-      // 한국시간(KST) 오늘 날짜 반환 (YYYY-MM-DD)
+      // ===== SHA-256 해시 (Web Crypto 우선 + 비보안 환경용 순수 JS 폴백) =====
+      function sha256Fallback(str) {
+        const bytes = new TextEncoder().encode(str);
+        const K = [
+          0x428a2f98,0x71374491,0xb5c0fbcf,0xe9b5dba5,0x3956c25b,0x59f111f1,0x923f82a4,0xab1c5ed5,
+          0xd807aa98,0x12835b01,0x243185be,0x550c7dc3,0x72be5d74,0x80deb1fe,0x9bdc06a7,0xc19bf174,
+          0xe49b69c1,0xefbe4786,0x0fc19dc6,0x240ca1cc,0x2de92c6f,0x4a7484aa,0x5cb0a9dc,0x76f988da,
+          0x983e5152,0xa831c66d,0xb00327c8,0xbf597fc7,0xc6e00bf3,0xd5a79147,0x06ca6351,0x14292967,
+          0x27b70a85,0x2e1b2138,0x4d2c6dfc,0x53380d13,0x650a7354,0x766a0abb,0x81c2c92e,0x92722c85,
+          0xa2bfe8a1,0xa81a664b,0xc24b8b70,0xc76c51a3,0xd192e819,0xd6990624,0xf40e3585,0x106aa070,
+          0x19a4c116,0x1e376c08,0x2748774c,0x34b0bcb5,0x391c0cb3,0x4ed8aa4a,0x5b9cca4f,0x682e6ff3,
+          0x748f82ee,0x78a5636f,0x84c87814,0x8cc70208,0x90befffa,0xa4506ceb,0xbef9a3f7,0xc67178f2
+        ];
+        const H = [0x6a09e667,0xbb67ae85,0x3c6ef372,0xa54ff53a,0x510e527f,0x9b05688c,0x1f83d9ab,0x5be0cd19];
+        const bitLen = bytes.length * 8;
+        const arr = Array.from(bytes);
+        arr.push(0x80);
+        while (arr.length % 64 !== 56) arr.push(0);
+        const hi = Math.floor(bitLen / 0x100000000);
+        const lo = bitLen >>> 0;
+        arr.push((hi >>> 24) & 0xff, (hi >>> 16) & 0xff, (hi >>> 8) & 0xff, hi & 0xff);
+        arr.push((lo >>> 24) & 0xff, (lo >>> 16) & 0xff, (lo >>> 8) & 0xff, lo & 0xff);
+
+        const rotr = (x, n) => (x >>> n) | (x << (32 - n));
+        const w = new Uint32Array(64);
+        for (let i = 0; i < arr.length; i += 64) {
+          for (let j = 0; j < 16; j++) {
+            w[j] = ((arr[i + j * 4] << 24) | (arr[i + j * 4 + 1] << 16) | (arr[i + j * 4 + 2] << 8) | arr[i + j * 4 + 3]) >>> 0;
+          }
+          for (let j = 16; j < 64; j++) {
+            const s0 = rotr(w[j - 15], 7) ^ rotr(w[j - 15], 18) ^ (w[j - 15] >>> 3);
+            const s1 = rotr(w[j - 2], 17) ^ rotr(w[j - 2], 19) ^ (w[j - 2] >>> 10);
+            w[j] = (w[j - 16] + s0 + w[j - 7] + s1) >>> 0;
+          }
+          let [a, b, c, d, e, f, g, h] = H;
+          for (let j = 0; j < 64; j++) {
+            const S1 = rotr(e, 6) ^ rotr(e, 11) ^ rotr(e, 25);
+            const ch = (e & f) ^ (~e & g);
+            const t1 = (h + S1 + ch + K[j] + w[j]) >>> 0;
+            const S0 = rotr(a, 2) ^ rotr(a, 13) ^ rotr(a, 22);
+            const maj = (a & b) ^ (a & c) ^ (b & c);
+            const t2 = (S0 + maj) >>> 0;
+            h = g; g = f; f = e; e = (d + t1) >>> 0;
+            d = c; c = b; b = a; a = (t1 + t2) >>> 0;
+          }
+          H[0] = (H[0] + a) >>> 0; H[1] = (H[1] + b) >>> 0; H[2] = (H[2] + c) >>> 0; H[3] = (H[3] + d) >>> 0;
+          H[4] = (H[4] + e) >>> 0; H[5] = (H[5] + f) >>> 0; H[6] = (H[6] + g) >>> 0; H[7] = (H[7] + h) >>> 0;
+        }
+        return H.map((v) => v.toString(16).padStart(8, '0')).join('');
+      }
+
+      async function makePinToken(pin) {
+        const text = `${String(pin).trim()}::${PIN_SALT}`;
+        if (window.crypto && window.crypto.subtle) {
+          try {
+            const buf = await crypto.subtle.digest('SHA-256', new TextEncoder().encode(text));
+            return Array.from(new Uint8Array(buf)).map((b) => b.toString(16).padStart(2, '0')).join('');
+          } catch (_) {}
+        }
+        return sha256Fallback(text);
+      }
+
+      // ===== Apps Script JSONP 호출 (인증 검증 / 데이터 동기화 공용) =====
+      function callGasJsonp(params, prefix = 'gaDashboardReceive') {
+        return new Promise((resolve, reject) => {
+          const cbName = `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`;
+          const script = document.createElement('script');
+          const cleanup = () => {
+            clearTimeout(timer);
+            script.remove();
+            try { delete window[cbName]; } catch (_) { window[cbName] = undefined; }
+          };
+          const timer = setTimeout(() => {
+            cleanup();
+            reject(new Error('서버 응답 시간 초과'));
+          }, 12000);
+
+          window[cbName] = (payload) => {
+            cleanup();
+            resolve(payload);
+          };
+          script.onerror = () => {
+            cleanup();
+            reject(new Error('서버 연결 오류'));
+          };
+
+          const qs = new URLSearchParams({ ...params, callback: cbName, _: String(Date.now()) });
+          script.src = `${GAS_PUBLIC_URL}?${qs.toString()}`;
+          document.body.appendChild(script);
+        });
+      }
+
+      async function verifyTokenWithServer(token) {
+        return callGasJsonp({ action: 'verify', token }, 'gaDashboardAuth');
+      }
+
+      // ===== 4단계 세션 저장 · 검사 · 수동 잠금 · 무효화 =====
+      function saveAuthSession(token, keep7Days) {
+        activeToken = token;
+        if (keep7Days) {
+          authExpiresAt = Date.now() + SEVEN_DAYS_MS;
+          try {
+            localStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ token, expiresAt: authExpiresAt }));
+            sessionStorage.removeItem(AUTH_STORAGE_KEY);
+          } catch (_) {}
+        } else {
+          authExpiresAt = 0;
+          try {
+            sessionStorage.setItem(AUTH_STORAGE_KEY, JSON.stringify({ token, expiresAt: 0 }));
+            localStorage.removeItem(AUTH_STORAGE_KEY);
+          } catch (_) {}
+        }
+      }
+
+      function readSavedAuthSession() {
+        try {
+          const rawLocal = localStorage.getItem(AUTH_STORAGE_KEY);
+          if (rawLocal) {
+            const parsed = JSON.parse(rawLocal);
+            if (parsed && parsed.token && typeof parsed.expiresAt === 'number') {
+              if (Date.now() < parsed.expiresAt) {
+                return { token: parsed.token, expiresAt: parsed.expiresAt, persistent: true };
+              }
+              // 2단계: 7일 만료 시 즉시 삭제
+              localStorage.removeItem(AUTH_STORAGE_KEY);
+            }
+          }
+          const rawSession = sessionStorage.getItem(AUTH_STORAGE_KEY);
+          if (rawSession) {
+            const parsed = JSON.parse(rawSession);
+            if (parsed && parsed.token) {
+              return { token: parsed.token, expiresAt: 0, persistent: false };
+            }
+          }
+        } catch (_) {
+          try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) {}
+        }
+        return null;
+      }
+
+      function clearAuthSession() {
+        activeToken = '';
+        authExpiresAt = 0;
+        try { localStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) {}
+        try { sessionStorage.removeItem(AUTH_STORAGE_KEY); } catch (_) {}
+      }
+
+      function updateAuthBadge() {
+        const badge = $('#authBadge');
+        if (!badge) return;
+        if (authExpiresAt > Date.now()) {
+          const remainDays = Math.max(1, Math.ceil((authExpiresAt - Date.now()) / 86400000));
+          badge.textContent = `7일 유지 중 · D-${remainDays}`;
+        } else {
+          badge.textContent = '임시 로그인';
+        }
+      }
+
+      function showLockScreen(message = '') {
+        clearAuthSession();
+        dashboardBooted = false;
+        if ($('#detail').open) $('#detail').close();
+        $('#content').innerHTML = '';
+        $('#appShell').hidden = true;
+        $('#lockScreen').hidden = false;
+        $('#pinInput').value = '';
+        $('#lockError').textContent = message;
+        setTimeout(() => $('#pinInput').focus(), 40);
+      }
+
+      function unlockAndBoot(token, expiresAt) {
+        activeToken = token;
+        authExpiresAt = expiresAt;
+        $('#lockError').textContent = '';
+        $('#lockScreen').hidden = true;
+        $('#appShell').hidden = false;
+        updateAuthBadge();
+
+        if (!dashboardBooted) {
+          dashboardBooted = true;
+          bootDashboard();
+        }
+      }
+
+      function triggerShake(msg) {
+        $('#lockError').textContent = msg;
+        const card = $('#lockForm');
+        card.classList.remove('shake');
+        void card.offsetWidth;
+        card.classList.add('shake');
+      }
+
+      // ===== 기존 대시보드 로직 (100% 유지) =====
       function getKstToday() {
         const now = new Date();
         const kst = new Date(now.getTime() + 9 * 3600 * 1000);
@@ -498,7 +864,6 @@
         return d.toISOString().slice(0, 10);
       }
 
-      // 오늘 날짜(KST) 기준으로 단도박 일수(days, journey)와 다가오는 잔치(100일, N년) 자동 재계산
       function computeMemberMetrics(member, fallbackAsOf, today) {
         let start = String(member.gamblingStartDate || member.startDate || '').trim();
         if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) {
@@ -546,13 +911,7 @@
           }
         }
 
-        return {
-          ...member,
-          gamblingStartDate: start,
-          journey,
-          days,
-          celebrations
-        };
+        return { ...member, gamblingStartDate: start, journey, days, celebrations };
       }
 
       function normalizeAndRecalculate(raw) {
@@ -597,14 +956,7 @@
           }))
           .filter((b) => b.id && b.date >= cutoff && b.date <= today && (b.group === '신림수요' || b.group === '신림토요'));
 
-        return {
-          asOf: today,
-          loadedAt: new Date().toISOString(),
-          mode: 'live',
-          members,
-          records,
-          briefs
-        };
+        return { asOf: today, loadedAt: new Date().toISOString(), mode: 'live', members, records, briefs };
       }
 
       const dateLabel = (d) => (d ? d.slice(2).replaceAll('-', '.') : '—');
@@ -719,7 +1071,7 @@
         if (!v.dates.includes(selectedSessionDate)) {
           selectedSessionDate = v.dates[0] || '';
         }
-        const currentIdx = v.dates.indexOf(selectedSessionDate); // v.dates는 최신순(내림차순)
+        const currentIdx = v.dates.indexOf(selectedSessionDate);
         const hasPrevChronological = currentIdx >= 0 && currentIdx < v.dates.length - 1;
         const hasNextChronological = currentIdx > 0;
         const isLatestSession = currentIdx <= 0;
@@ -916,7 +1268,7 @@
       }
 
       function render() {
-        if (!data) return;
+        if (!data || !activeToken) return;
         const v = select(data, group, period);
         $('#content').innerHTML = tab === 'overview' ? overview(v) : tab === 'members' ? roster(v) : briefing();
         document.querySelectorAll('[data-group]').forEach((b) => {
@@ -953,38 +1305,24 @@
         }
       }
 
-      function fetchFromGasJsonp() {
-        return new Promise((resolve, reject) => {
-          const script = document.createElement('script');
-          const timer = setTimeout(() => {
-            script.remove();
-            reject(new Error('시트 응답 시간 초과'));
-          }, 12000);
-          window.gaDashboardReceive = (payload) => {
-            clearTimeout(timer);
-            script.remove();
-            resolve(payload);
-          };
-          script.onerror = () => {
-            clearTimeout(timer);
-            script.remove();
-            reject(new Error('시트 연결 오류'));
-          };
-          script.src = `${GAS_PUBLIC_URL}?callback=gaDashboardReceive&_=${Date.now()}`;
-          document.body.appendChild(script);
-        });
+      async function fetchFromGasJsonp() {
+        const payload = await callGasJsonp({ token: activeToken }, 'gaDashboardReceive');
+        if (payload && payload.ok === false && payload.error === 'INVALID_PIN') {
+          const err = new Error('INVALID_PIN');
+          err.code = 'INVALID_PIN';
+          throw err;
+        }
+        return payload;
       }
 
       async function loadFeed(forceSheetSync = false) {
-        if (loading) return;
+        if (loading || !activeToken) return;
         loading = true;
         showUpdateNote(data ? `최근 확인한 기록 · ${dateLabel(data.asOf)} 기준 · 클라우드 확인 중…` : 'Firebase 클라우드에서 출석 기록을 불러오고 있어…');
 
         try {
-          // 1순위: Firebase /ga-public/dashboard.json 즉시 로드 (0.1초)
           let cloudPayload = await fetchJson(FIREBASE_PUBLIC_URL);
 
-          // 만약 /ga-public이 아직 비어있다면 /ga-admin에서 자동 조립
           if (!cloudPayload || !Array.isArray(cloudPayload.members)) {
             const [adminData, adminBriefs] = await Promise.all([
               fetchJson(FIREBASE_ADMIN_URL),
@@ -1009,7 +1347,6 @@
             return;
           }
 
-          // 클라우드가 비어 있거나 사용자가 [최신 기록 확인]을 직접 누른 경우에만 시트에서 동기화 후 클라우드 저장
           const sheetPayload = await fetchFromGasJsonp();
           if (sheetPayload && Array.isArray(sheetPayload.members)) {
             data = normalizeAndRecalculate(sheetPayload);
@@ -1027,12 +1364,73 @@
           throw new Error('데이터를 찾지 못했어.');
         } catch (err) {
           loading = false;
+          // 4단계: 시트 동기화 중 비밀번호 변경 감지 시 즉시 잠금
+          if (err && err.code === 'INVALID_PIN') {
+            showLockScreen('비밀번호가 변경되어 재인증이 필요합니다.');
+            return;
+          }
           showUpdateNote(data ? `저장된 기록 표시 중 · ${dateLabel(data.asOf)} 기준` : '출석 기록을 불러오지 못했어. 잠시 후 다시 확인해줘.');
         }
       }
 
-      // 이벤트 리스너 연결
+      function bootDashboard() {
+        try {
+          const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
+          if (cached && Array.isArray(cached.members)) {
+            data = normalizeAndRecalculate(cached);
+            render();
+          }
+        } catch (_) {}
+        loadFeed(false);
+      }
+
+      // ===== 잠금 화면 & 대시보드 이벤트 연결 =====
+      $('#pinToggle').onclick = () => {
+        const input = $('#pinInput');
+        const isPw = input.type === 'password';
+        input.type = isPw ? 'text' : 'password';
+        $('#pinToggle').textContent = isPw ? '🙈' : '👁';
+      };
+
+      $('#lockForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const pin = $('#pinInput').value.trim();
+        if (!pin) {
+          triggerShake('비밀번호를 입력해 주세요.');
+          return;
+        }
+        const btn = $('#unlockBtn');
+        btn.disabled = true;
+        btn.textContent = '확인 중…';
+        $('#lockError').textContent = '';
+
+        try {
+          const token = await makePinToken(pin);
+          const res = await verifyTokenWithServer(token);
+          if (res && res.ok) {
+            // 1단계: 인증 성공 시 만료 시각 저장
+            const keep = $('#keepLogin').checked;
+            saveAuthSession(token, keep);
+            unlockAndBoot(token, keep ? authExpiresAt : 0);
+          } else {
+            triggerShake((res && res.message) || '비밀번호가 올바르지 않습니다.');
+            $('#pinInput').select();
+          }
+        } catch (_) {
+          triggerShake('인증 서버에 연결하지 못했습니다. 잠시 후 다시 시도해 주세요.');
+        } finally {
+          btn.disabled = false;
+          btn.textContent = '대시보드 열기';
+        }
+      });
+
+      // 3단계: 수동 잠금(로그아웃)
+      $('#lockBtn').onclick = () => {
+        showLockScreen('');
+      };
+
       document.addEventListener('click', (e) => {
+        if (!activeToken) return;
         const g = e.target.closest('[data-group]');
         const t = e.target.closest('[data-tab]');
         const m = e.target.closest('[data-member]');
@@ -1096,16 +1494,21 @@
         }
       });
 
-      // 초기 부팅: 로컬 캐시가 있으면 먼저 즉시 그리면서 동시에 오늘 날짜로 재계산 후 Firebase 로드
-      try {
-        const cached = JSON.parse(localStorage.getItem(CACHE_KEY) || 'null');
-        if (cached && Array.isArray(cached.members)) {
-          data = normalizeAndRecalculate(cached);
-          render();
-        }
-      } catch (_) {}
-
-      loadFeed(false);
+      // ===== 2단계 & 4단계: 접속 시 자동 검사 + 백그라운드 비밀번호 변경 검증 =====
+      const saved = readSavedAuthSession();
+      if (saved) {
+        unlockAndBoot(saved.token, saved.expiresAt);
+        // 백그라운드에서 서버 비밀번호 변경 여부 대조 (네트워크 일시 장애 시에는 유지, 명확한 INVALID_PIN일 때만 즉시 잠금)
+        verifyTokenWithServer(saved.token)
+          .then((res) => {
+            if (res && res.ok === false && res.error === 'INVALID_PIN') {
+              showLockScreen('비밀번호가 변경되어 재인증이 필요합니다.');
+            }
+          })
+          .catch(() => {});
+      } else {
+        showLockScreen('');
+      }
     })();
   </script>
 </body>
