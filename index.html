@@ -403,6 +403,25 @@
     .person b { font-size: 13px; }
     .person span { font-size: 12px; color: var(--muted); text-align: right; }
     .person .celebration, .celebration { color: var(--red); font-weight: 700; }
+    .celebration-group { margin-top: 12px; }
+    .celebration-group:first-child { margin-top: 0; }
+    .celebration-month-head {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      font-size: 12px;
+      font-weight: 750;
+      color: var(--brand);
+      background: var(--soft);
+      border-radius: 8px;
+      padding: 6px 10px;
+      margin-bottom: 4px;
+    }
+    .celebration-month-head span {
+      font-size: 11px;
+      font-weight: 600;
+      color: var(--muted);
+    }
     .tag {
       background: var(--soft);
       color: var(--brand);
@@ -1087,10 +1106,28 @@
         }));
         const monthly = months(v.rows);
         const max = Math.max(1, ...monthly.map((m) => m.average));
-        const celebrationMonth = (m) => m.celebrations.map((c) => c.date.slice(0, 7)).sort()[0];
-        const celebrate = data.members
+        const thisMonth = data.asOf.slice(0, 7);
+        const nextMonth = shiftMonth(thisMonth + '-01', 1).slice(0, 7);
+        const celebrationGroups = new Map();
+        data.members
           .filter((m) => m.group === group && v.active.has(m.id) && m.celebrations?.length)
-          .sort((a, b) => celebrationMonth(a).localeCompare(celebrationMonth(b)) || compareJourney(a, b));
+          .forEach((m) => {
+            m.celebrations.forEach((c) => {
+              const ym = String(c.date || '').slice(0, 7);
+              if (!ym) return;
+              if (!celebrationGroups.has(ym)) celebrationGroups.set(ym, []);
+              celebrationGroups.get(ym).push({ member: m, label: c.label, ym });
+            });
+          });
+        const celebrationSections = [...celebrationGroups.entries()]
+          .sort((a, b) => a[0].localeCompare(b[0]))
+          .map(([ym, items]) => {
+            items.sort((a, b) => compareJourney(a.member, b.member));
+            const ymText = `${ym.slice(2, 4)}년 ${Number(ym.slice(5, 7))}월`;
+            const rel = ym === thisMonth ? '이번 달' : ym === nextMonth ? '다음 달' : '';
+            const countText = `${rel ? rel + ' · ' : ''}${items.length}명`;
+            return { ym, ymText, countText, items };
+          });
 
         const firstStatCard = `
           <div class="stat">
@@ -1147,13 +1184,20 @@
             </section>
             <section class="panel">
               <div class="section-head"><h2>다가오는 잔치</h2><span>이번 달 · 다음 달</span></div>
-              <div class="list">
-                ${celebrate.map((m) => `
-                  <button class="person" data-member="${esc(m.id)}">
-                    <b>${esc(m.name)}</b>
-                    <span class="celebration">${m.celebrations.map((c) => `${c.date.slice(2, 4)}년 ${Number(c.date.slice(5, 7))}월 ${Number(c.date.slice(8, 10))}일 · ${esc(c.label)}`).join('<br>')}</span>
-                  </button>`).join('') || '<div class="empty">등록된 잔치 일정이 없어.</div>'}
-              </div>
+              ${celebrationSections.length ? celebrationSections.map((sec) => `
+                <div class="celebration-group">
+                  <div class="celebration-month-head">
+                    <b>${sec.ymText}</b>
+                    <span>${sec.countText}</span>
+                  </div>
+                  <div class="list">
+                    ${sec.items.map((item) => `
+                      <button class="person" data-member="${esc(item.member.id)}">
+                        <b>${esc(item.member.name)}</b>
+                        <span class="celebration">${sec.ymText} · ${esc(item.label)}</span>
+                      </button>`).join('')}
+                  </div>
+                </div>`).join('') : '<div class="empty">등록된 잔치 일정이 없어.</div>'}
               <p class="caption">해당 모임 소속 · 최근 6개월 참석 회원 기준 · 오늘 날짜 기준 자동 계산</p>
             </section>
           </div>`;
