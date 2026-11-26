@@ -561,15 +561,26 @@
     .attendance-day { display: inline-grid; place-items: center; width: 26px; height: 25px; border-radius: 4px; background: var(--brand); color: white; font-size: 11px; }
     .attendance-month > span { color: var(--muted); text-align: right; }
 
-    /* Keep both brand lines intact; let account controls wrap instead. */
-    header { flex-wrap: wrap; }
-    .identity { flex: 0 0 auto; }
+    /* Align the two account controls with the brand, without wrapping text. */
+    header { flex-wrap: nowrap; align-items: center; }
+    .identity { flex: 1 1 auto; min-width: 0; }
     .identity .logo { flex-shrink: 0; }
     .identity b, .identity small { white-space: nowrap; }
-    .header-actions { margin-left: auto; }
+    .header-actions { flex: 0 0 auto; margin-left: auto; flex-direction: column; flex-wrap: nowrap; align-items: flex-end; gap: 4px; }
     @media (max-width: 480px) {
-      header { gap: 8px; }
-      .header-actions { flex-basis: 100%; flex-wrap: nowrap; }
+      header { gap: 6px; }
+      .identity { gap: 8px; }
+      .identity .logo { width: 36px; height: 36px; font-size: 17px; }
+      .identity b { font-size: 16px; }
+      .identity small { font-size: 9px; }
+      .header-actions .readonly, .header-actions .lock-btn { font-size: 9px; padding: 3px 6px; line-height: 1.4; }
+    }
+    @media (max-width: 360px) {
+      .identity { gap: 6px; }
+      .identity .logo { width: 32px; height: 32px; font-size: 16px; }
+      .identity b { font-size: 14px; }
+      .identity small { font-size: 8px; }
+      .header-actions .readonly, .header-actions .lock-btn { font-size: 8px; padding: 3px 5px; }
     }
   </style>
 </head>
