@@ -560,6 +560,17 @@
     .attendance-days { display: flex; flex-wrap: wrap; gap: 3px; }
     .attendance-day { display: inline-grid; place-items: center; width: 26px; height: 25px; border-radius: 4px; background: var(--brand); color: white; font-size: 11px; }
     .attendance-month > span { color: var(--muted); text-align: right; }
+
+    /* Keep both brand lines intact; let account controls wrap instead. */
+    header { flex-wrap: wrap; }
+    .identity { flex: 0 0 auto; }
+    .identity .logo { flex-shrink: 0; }
+    .identity b, .identity small { white-space: nowrap; }
+    .header-actions { margin-left: auto; }
+    @media (max-width: 480px) {
+      header { gap: 8px; }
+      .header-actions { flex-basis: 100%; flex-wrap: nowrap; }
+    }
   </style>
 </head>
 <body>
